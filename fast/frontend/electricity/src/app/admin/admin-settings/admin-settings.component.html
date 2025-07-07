@@ -1,0 +1,74 @@
+<div class="admin-settings-container">
+  <div class="page-header">
+    <h1>System Settings</h1>
+    <p>Configure system-wide settings and preferences</p>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="settings-controls">
+    <div class="search-bar">
+      <input 
+        type="text" 
+        placeholder="Search settings..." 
+        [(ngModel)]="searchTerm"
+        (input)="filterSettings()">
+    </div>
+    <div class="category-filter">
+      <select [(ngModel)]="selectedCategory" (change)="filterSettings()">
+        <option value="All">All Categories</option>
+        <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Settings List -->
+  <div class="settings-list">
+    <div class="settings-section" *ngFor="let category of categories">
+      <h2>{{ category }}</h2>
+      <div class="settings-items">
+        <div class="setting-item" *ngFor="let setting of getSettingsByCategory(category)">
+          <div class="setting-info">
+            <label>{{ setting.name }}</label>
+            <p class="setting-description">{{ setting.description }}</p>
+          </div>
+          <div class="setting-control">
+            <!-- Text Input -->
+            <input 
+              *ngIf="setting.type === 'text'" 
+              type="text" 
+              [(ngModel)]="setting.value"
+              [placeholder]="setting.name">
+            
+            <!-- Number Input -->
+            <input 
+              *ngIf="setting.type === 'number'" 
+              type="number" 
+              [(ngModel)]="setting.value"
+              [placeholder]="setting.name">
+            
+            <!-- Boolean Checkbox -->
+            <label class="checkbox-container" *ngIf="setting.type === 'boolean'">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="setting.value">
+              <span class="checkmark"></span>
+            </label>
+            
+            <!-- Select Dropdown -->
+            <select 
+              *ngIf="setting.type === 'select'" 
+              [(ngModel)]="setting.value">
+              <option *ngFor="let option of setting.options" [value]="option">{{ option }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="actions-bar">
+    <button class="btn-primary" (click)="saveAllSettings()">Save All Settings</button>
+    <button class="btn-secondary" (click)="resetSettings()">Reset to Default</button>
+  </div>
+</div>

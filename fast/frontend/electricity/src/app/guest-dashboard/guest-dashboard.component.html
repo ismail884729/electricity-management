@@ -1,0 +1,82 @@
+<div class="guest-dashboard">
+    <!-- Sticky Header Section -->
+    <header class="dashboard-header">
+      <div class="logo">
+        <div class="logo-text">Electricity Service</div>
+      </div>
+      <nav class="header-nav">
+        <a [routerLink]="['/login']" class="login-link">Login</a>
+      </nav>
+    </header>
+
+    <!-- Main Content Section -->
+    <main class="dashboard-content">
+      <h1 class="welcome-text">Welcome to Your Energy Hub</h1>
+      <p class="welcome-subtext">Manage your electricity needs effortlessly with our intuitive guest dashboard. Purchase tokens, monitor usage, and get support - all in one place.</p>
+      
+      <div class="action-cards">
+        <div class="card purchase-card">
+          <span class="card-icon">⚡</span>
+          <h2>Purchase Electricity</h2>
+          <p>Buy electricity tokens quickly and securely with multiple payment options for instant delivery.</p>
+          <button [routerLink]="['/guest/chat']" class="btn primary-btn">Buy Now</button>
+        </div>
+
+        <div class="card usage-card">
+          <span class="card-icon">📊</span>
+          <h2>Usage Statistics</h2>
+          <p>View your consumption patterns, track spending, and discover energy-saving opportunities.</p>
+          <button class="btn secondary-btn">View Stats</button>
+        </div>
+        
+        <div class="card support-card">
+          <span class="card-icon">💬</span>
+          <h2>Customer Support</h2>
+          <p>Get assistance with your account, technical issues, or general inquiries about our services.</p>
+          <button class="btn tertiary-btn">Contact Us</button>
+        </div>
+      </div>
+      
+      <!-- Stats Widget -->
+      <div class="stats-widget">
+        <h2 class="stats-title">Your Energy Overview</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">74%</div>
+            <div class="stat-label">Current Balance</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">12.4</div>
+            <div class="stat-label">kWh Used Today</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">-8%</div>
+            <div class="stat-label">vs Last Week</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">5d</div>
+            <div class="stat-label">Estimated Days Left</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="dashboard-footer">
+      <div class="footer-content">
+        <div class="footer-logo">
+          <div class="footer-logo-text">Electricity Service</div>
+        </div>
+        
+        <p class="footer-copyright">&copy; 2024 Electricity Service. All rights reserved.</p>
+        
+        <div class="footer-links">
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Service</a>
+          <a href="/support">Support</a>
+          <a href="/contact">Contact Us</a>
+          <a href="/about">About Us</a>
+        </div>
+      </div>
+    </footer>
+  </div>

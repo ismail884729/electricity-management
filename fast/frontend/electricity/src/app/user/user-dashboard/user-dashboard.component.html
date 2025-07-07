@@ -1,0 +1,226 @@
+<div class="user-dashboard">
+  <header class="dashboard-header">
+    <div class="header-brand">
+      <h1>User Dashboard</h1>
+    </div>
+    <div class="user-account">
+      <span class="user-greeting">Welcome, {{ currentUser?.full_name || 'User' }}</span>
+      <button (click)="logout()" class="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <nav class="nav-menu">
+        <div class="menu-section">
+          <h3 class="section-title">My Account</h3>
+          <ul class="menu-items">
+            <li class="menu-item" [class.active]="activePage === 'dashboard'">
+              <a routerLink="/user/dashboard">
+                <span class="icon">🏠</span>
+                <span>Overview</span>
+              </a>
+            </li>
+            <li class="menu-item" [class.active]="activePage === 'profile'">
+              <a routerLink="/user/dashboard/profile">
+                <span class="icon">👤</span>
+                <span>Profile</span>
+              </a>
+            </li>
+            <li class="menu-item" [class.active]="activePage === 'devices'">
+              <a routerLink="/user/dashboard/devices">
+                <span class="icon">�</span>
+                <span>Device Details</span>
+              </a>
+            </li>
+            <li class="menu-item" [class.active]="activePage === 'transactions'">
+              <a routerLink="/user/dashboard/transactions">
+                <span class="icon">📜</span>
+                <span>Transactions</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="menu-section">
+          <h3 class="section-title">Services</h3>
+          <ul class="menu-items">
+            <li class="menu-item" [class.active]="activePage === 'buy-electricity'">
+              <a routerLink="/user/dashboard/buy-electricity">
+                <span class="icon">⚡</span>
+                <span>Buy Electricity</span>
+              </a>
+            </li>
+            <li class="menu-item" [class.active]="activePage === 'statistics'">
+              <a routerLink="/user/dashboard/statistics">
+                <span class="icon">📊</span>
+                <span>Usage Statistics</span>
+              </a>
+            </li>
+            <li class="menu-item" [class.active]="activePage === 'support'">
+              <a routerLink="/user/dashboard/support">
+                <span class="icon">🛟</span>
+                <span>Support</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <!-- Router outlet will display the child components here -->
+      <router-outlet></router-outlet>
+      
+      <!-- Default dashboard view when no child route is active -->
+      <div *ngIf="isRootRoute" class="dashboard-overview">
+        <div class="page-header">
+          <h2>Hello, {{ getUserFirstName() }}!</h2>
+          <div class="date-filter">
+            <label>View period:</label>
+            <select>
+              <option>Last 30 days</option>
+              <option>Last 3 months</option>
+              <option>Last 6 months</option>
+              <option>Last year</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="account-summary">
+          <div class="info-card primary">
+            <span class="card-label">Account Balance</span>
+            <div class="card-value">{{ formatCurrency(currentUser?.unit_balance) }}</div>
+            <div class="card-footer">
+              <span>Last updated: {{ currentUser?.updated_at | date:'mediumDate' || 'N/A' }}</span>
+            </div>
+          </div>
+
+          <div class="info-card secondary">
+            <span class="card-label">Current Usage</span>
+            <div class="card-value">{{ currentUsage }} kWh</div>
+            <div class="card-footer">
+              <span>This month</span>
+            </div>
+          </div>
+
+          <div class="info-card tertiary">
+            <span class="card-label">Estimated Remaining</span>
+            <div class="card-value">{{ estimatedDaysRemaining }} Days</div>
+            <div class="card-footer">
+              <span>Based on current usage</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="usage-chart">
+          <h3>Electricity Consumption</h3>
+          <div class="chart-container">
+            <!-- Chart would be rendered here by a chart library -->
+            <div class="placeholder-chart">
+              <div class="bar-container">
+                <div class="chart-bar" style="height: 60%;">
+                  <span class="bar-value">150 kWh</span>
+                </div>
+                <span class="bar-label">Mon</span>
+              </div>
+              <div class="bar-container">
+                <div class="chart-bar" style="height: 80%;">
+                  <span class="bar-value">200 kWh</span>
+                </div>
+                <span class="bar-label">Tue</span>
+              </div>
+              <div class="bar-container">
+                <div class="chart-bar" style="height: 50%;">
+                  <span class="bar-value">125 kWh</span>
+                </div>
+                <span class="bar-label">Wed</span>
+              </div>
+              <div class="bar-container">
+                <div class="chart-bar" style="height: 70%;">
+                  <span class="bar-value">175 kWh</span>
+                </div>
+                <span class="bar-label">Thu</span>
+              </div>
+              <div class="bar-container">
+                <div class="chart-bar" style="height: 90%;">
+                  <span class="bar-value">225 kWh</span>
+                </div>
+                <span class="bar-label">Fri</span>
+              </div>
+              <div class="bar-container">
+                <div class="chart-bar" style="height: 40%;">
+                  <span class="bar-value">100 kWh</span>
+                </div>
+                <span class="bar-label">Sat</span>
+              </div>
+              <div class="bar-container">
+                <div class="chart-bar" style="height: 30%;">
+                  <span class="bar-value">75 kWh</span>
+                </div>
+                <span class="bar-label">Sun</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="recent-transactions">
+          <div class="section-header">
+            <h3>Recent Transactions</h3>
+            <a routerLink="/user/dashboard/transactions" class="view-all">View All</a>
+          </div>
+          <div class="transactions-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Jul 3, 2025</td>
+                  <td>Electricity Token Purchase</td>
+                  <td>TSh 50,000</td>
+                  <td><span class="status success">Completed</span></td>
+                </tr>
+                <tr>
+                  <td>Jun 25, 2025</td>
+                  <td>Electricity Token Purchase</td>
+                  <td>TSh 35,000</td>
+                  <td><span class="status success">Completed</span></td>
+                </tr>
+                <tr>
+                  <td>Jun 12, 2025</td>
+                  <td>Electricity Token Purchase</td>
+                  <td>TSh 25,000</td>
+                  <td><span class="status success">Completed</span></td>
+                </tr>
+                <tr>
+                  <td>May 29, 2025</td>
+                  <td>Account Credit</td>
+                  <td>TSh 15,000</td>
+                  <td><span class="status success">Completed</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <h3>Quick Actions</h3>
+          <div class="balance-info">
+            <p>Your current balance: <strong>{{ formatCurrency(currentUser?.unit_balance) }}</strong></p>
+          </div>
+          <div class="action-buttons">
+            <button class="action-button primary" routerLink="/user/dashboard/buy-electricity">Buy Electricity</button>
+            <button class="action-button secondary" routerLink="/user/dashboard/support">Report Issue</button>
+            <button class="action-button tertiary" routerLink="/user/dashboard/profile">Update Profile</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

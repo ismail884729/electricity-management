@@ -1,0 +1,378 @@
+.buy-electricity-container {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  color: #333;
+  margin: 0;
+}
+
+.chatbot-toggle {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.chatbot-toggle:hover {
+  background-color: #e0e0e0;
+}
+
+/* Layout */
+.electricity-content {
+  display: flex;
+  gap: 20px;
+  height: calc(100% - 60px);
+}
+
+.electricity-content.with-chatbot .purchase-form {
+  flex: 0 0 60%;
+}
+
+.purchase-form {
+  flex: 0 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chatbot-container {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: white;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Form Card */
+.form-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.form-card h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-weight: 500;
+}
+
+input[type="number"],
+select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.units-preview {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 15px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.units-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.calculated-cost {
+  font-size: 16px;
+  color: #4caf50;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.rate-info {
+  background-color: #e8f5e9;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border-left: 4px solid #4caf50;
+}
+
+.rate-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.rate-price {
+  margin-top: 5px;
+  font-size: 14px;
+  color: #00695c;
+}
+
+.rate-date {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #666;
+}
+
+.units-label {
+  color: #666;
+  font-size: 14px;
+}
+
+/* Payment Methods */
+.payment-methods {
+  margin-bottom: 30px;
+}
+
+.payment-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.payment-option {
+  flex: 0 0 calc(50% - 5px);
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payment-option:hover {
+  background-color: #f0f0f0;
+}
+
+.payment-option.selected {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+}
+
+.payment-icon {
+  width: 32px;
+  height: 32px;
+  background-color: #ddd;
+  border-radius: 4px;
+}
+
+.payment-icon.credit {
+  background-color: #ffebee;
+}
+
+.payment-icon.debit {
+  background-color: #e8f5e9;
+}
+
+.payment-icon.paypal {
+  background-color: #e3f2fd;
+}
+
+.payment-icon.bank {
+  background-color: #fff8e1;
+}
+
+.payment-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Form Actions */
+.error-message {
+  color: #d32f2f;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-purchase {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.btn-purchase:hover {
+  background-color: #3d8b40;
+}
+
+.btn-purchase:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+/* Info Card */
+.info-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.info-section {
+  margin-bottom: 20px;
+}
+
+.info-section:last-child {
+  margin-bottom: 0;
+}
+
+.info-section h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.info-content p {
+  margin: 8px 0;
+  color: #555;
+}
+
+.btn-secondary {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #1976d2;
+}
+
+/* Transaction Success */
+.transaction-success {
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  text-align: center;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  background-color: #4caf50;
+  border-radius: 50%;
+  color: white;
+  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.transaction-success h2 {
+  color: #333;
+  margin: 0 0 30px 0;
+}
+
+.success-details {
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-label {
+  color: #666;
+  font-size: 14px;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: #333;
+}
+
+.success-actions {
+  margin-top: 20px;
+}
+
+.btn-primary {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #1976d2;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .electricity-content {
+    flex-direction: column;
+  }
+
+  .electricity-content.with-chatbot .purchase-form {
+    flex: none;
+  }
+
+  .chatbot-container {
+    height: 400px;
+    flex: none;
+  }
+
+  .payment-option {
+    flex: 0 0 100%;
+  }
+}

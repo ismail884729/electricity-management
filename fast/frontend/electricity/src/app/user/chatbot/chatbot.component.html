@@ -1,0 +1,52 @@
+<div class="chatbot-wrapper">
+  <div class="chatbot-header">
+    <div class="chatbot-title">
+      <div class="bot-avatar">🤖</div>
+      <div class="bot-info">
+        <div class="bot-name">Electricity Assistant</div>
+        <div class="bot-status">Online</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="chat-messages">
+    <div class="message-item" 
+         *ngFor="let message of messages"
+         [ngClass]="{'user-message': message.sender === 'user', 'bot-message': message.sender === 'bot'}">
+      <div class="message-content">
+        {{ message.text }}
+      </div>
+      <div class="message-time">
+        {{ message.timestamp | date:'shortTime' }}
+      </div>
+    </div>
+    
+    <div class="typing-indicator" *ngIf="isTyping">
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+  </div>
+  
+  <div class="chat-input">
+    <input type="text" 
+           placeholder="Type your message here..." 
+           [(ngModel)]="userMessage"
+           (keyup.enter)="sendMessage()">
+    <button class="send-button" (click)="sendMessage()" [disabled]="isTyping">Send</button>
+  </div>
+  
+  <div class="chatbot-footer">
+    <div class="quick-suggestions">
+      <button class="suggestion" (click)="userMessage = 'What is the current rate?'; sendMessage()">
+        Current Rates
+      </button>
+      <button class="suggestion" (click)="userMessage = 'How do I pay?'; sendMessage()">
+        Payment Methods
+      </button>
+      <button class="suggestion" (click)="userMessage = 'How to purchase?'; sendMessage()">
+        Help
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,115 @@
+<div class="device-container">
+  <div class="section-header">
+    <h2>Device Details</h2>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loader-spinner"></div>
+    <p>Loading device information...</p>
+  </div>
+
+  <div *ngIf="!isLoading && devices.length === 0" class="no-devices-container">
+    <div class="no-devices-message">
+      <i class="no-devices-icon">📡</i>
+      <h3>No Devices Found</h3>
+      <p>You don't have any devices registered yet. Please contact support to add devices to your account.</p>
+      <button class="contact-support-btn" routerLink="/user/support">Contact Support</button>
+    </div>
+  </div>
+
+  <div class="device-layout" *ngIf="!isLoading && devices.length > 0">
+    <!-- Device List -->
+    <div class="device-list">
+      <h3>Your Devices</h3>
+      <div class="device-list-items">
+        <div *ngFor="let device of devices" 
+             class="device-item" 
+             [class.active]="selectedDevice && device.id === selectedDevice.id"
+             (click)="selectDevice(device)">
+          <div class="device-icon" [ngClass]="{'meter': device.device_type === 'Smart Meter', 'gateway': device.device_type === 'Gateway'}">
+            <span *ngIf="device.device_type === 'Smart Meter' || device.device_type.toLowerCase().includes('meter')">⚡</span>
+            <span *ngIf="device.device_type === 'Gateway' || device.device_type.toLowerCase().includes('gateway')">📶</span>
+            <span *ngIf="!device.device_type.toLowerCase().includes('meter') && !device.device_type.toLowerCase().includes('gateway')">🔌</span>
+          </div>
+          <div class="device-basic-info">
+            <div class="device-name">{{ device.device_name }}</div>
+            <div class="device-id">ID: {{ device.serial_number }}</div>
+            <div class="device-status" [ngClass]="{'active': device.status === 'active', 'inactive': device.status !== 'active'}">
+              {{ device.status }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Device Detail View -->
+    <div class="device-detail-view" *ngIf="selectedDevice">
+      <div class="device-header">
+        <h3>{{ selectedDevice.device_name }} ({{ selectedDevice.serial_number }})</h3>
+        <div class="device-actions">
+          <button class="device-action primary">Test Connection</button>
+          <button class="device-action secondary">Reset Device</button>
+        </div>
+      </div>
+
+      <div class="device-info-card">
+        <div class="info-section">
+          <h4>General Information</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Device Type</div>
+              <div class="info-value">{{ selectedDevice.device_type }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Device ID</div>
+              <div class="info-value">{{ selectedDevice.id }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Serial Number</div>
+              <div class="info-value">{{ selectedDevice.serial_number }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Installation Date</div>
+              <div class="info-value">{{ formatDate(selectedDevice.installation_date) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h4>Device Status</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Status</div>
+              <div class="info-value status" [ngClass]="{'active': selectedDevice.status === 'active', 'inactive': selectedDevice.status !== 'active'}">
+                {{ selectedDevice.status }}
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">User ID</div>
+              <div class="info-value">{{ selectedDevice.user_id }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Last Reading</div>
+              <div class="info-value">{{ selectedDevice.last_reading }} kWh</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="device-readings-chart">
+          <h4>Device Readings (Last 7 Days)</h4>
+          <div class="chart-placeholder">
+            <div class="chart-line"></div>
+            <div class="chart-markers">
+              <div class="chart-point" style="left: 10%; top: 70%"></div>
+              <div class="chart-point" style="left: 25%; top: 50%"></div>
+              <div class="chart-point" style="left: 40%; top: 60%"></div>
+              <div class="chart-point" style="left: 55%; top: 30%"></div>
+              <div class="chart-point" style="left: 70%; top: 45%"></div>
+              <div class="chart-point" style="left: 85%; top: 20%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

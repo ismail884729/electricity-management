@@ -1,0 +1,98 @@
+<div class="transactions-container">
+  <div class="section-header">
+    <h2>Your Transactions</h2>
+    <div class="transaction-actions">
+      <div class="search-bar">
+        <input type="text" placeholder="Search by ID, date, or amount..." [(ngModel)]="searchText" (keyup)="filterTransactions()">
+      </div>
+      <div class="filters">
+        <button [class.active]="statusFilter === 'all'" (click)="setStatusFilter('all')">All</button>
+        <button [class.active]="statusFilter === 'Completed'" (click)="setStatusFilter('Completed')">Completed</button>
+        <button [class.active]="statusFilter === 'Pending'" (click)="setStatusFilter('Pending')">Pending</button>
+        <button [class.active]="statusFilter === 'Failed'" (click)="setStatusFilter('Failed')">Failed</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="transactions-content">
+    <!-- Transactions List -->
+    <div class="transactions-list">
+      <div class="transactions-header">
+        <div class="th-id">Transaction ID</div>
+        <div class="th-date">Date</div>
+        <div class="th-amount">Amount</div>
+        <div class="th-units">Units</div>
+        <div class="th-status">Status</div>
+        <div class="th-actions">Actions</div>
+      </div>
+      <div class="transactions-body">
+        <div *ngFor="let transaction of filteredTransactions" 
+             class="transaction-row" 
+             [class.selected]="selectedTransaction && transaction.id === selectedTransaction.id"
+             (click)="selectTransaction(transaction)">
+          <div class="td-id">{{ transaction.id }}</div>
+          <div class="td-date">{{ transaction.date }}</div>
+          <div class="td-amount">{{ transaction.amount }}</div>
+          <div class="td-units">{{ transaction.units }}</div>
+          <div class="td-status" [ngClass]="{
+            'status-completed': transaction.status === 'Completed',
+            'status-pending': transaction.status === 'Pending',
+            'status-failed': transaction.status === 'Failed'
+          }">{{ transaction.status }}</div>
+          <div class="td-actions">
+            <button class="view-receipt" (click)="selectTransaction(transaction)">View Details</button>
+          </div>
+        </div>
+        
+        <div *ngIf="filteredTransactions.length === 0" class="no-transactions">
+          <p>No transactions found.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction Details -->
+    <div class="transaction-details" *ngIf="selectedTransaction">
+      <div class="details-header">
+        <h3>Transaction Details</h3>
+        <div class="details-id">{{ selectedTransaction.id }}</div>
+      </div>
+
+      <div class="details-body">
+        <div class="detail-row">
+          <div class="detail-label">Transaction Date</div>
+          <div class="detail-value">{{ selectedTransaction.date }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Amount Paid</div>
+          <div class="detail-value">{{ selectedTransaction.amount }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Units Purchased</div>
+          <div class="detail-value">{{ selectedTransaction.units }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Payment Method</div>
+          <div class="detail-value">{{ selectedTransaction.paymentMethod }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Status</div>
+          <div class="detail-value status" [ngClass]="{
+            'status-completed': selectedTransaction.status === 'Completed',
+            'status-pending': selectedTransaction.status === 'Pending',
+            'status-failed': selectedTransaction.status === 'Failed'
+          }">{{ selectedTransaction.status }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Receipt Number</div>
+          <div class="detail-value">{{ selectedTransaction.receiptNo }}</div>
+        </div>
+      </div>
+
+      <div class="details-actions">
+        <button class="download-receipt" (click)="downloadReceipt(selectedTransaction.receiptNo)">
+          <span class="icon">⬇️</span> Download Receipt
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

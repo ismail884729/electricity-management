@@ -1,0 +1,140 @@
+<div class="buy-electricity-container">
+  <div *ngIf="!transactionComplete">
+    <div class="section-header">
+      <h2>Buy Electricity</h2>
+      <button class="chatbot-toggle" (click)="toggleChatbot()">
+        <span *ngIf="!showChatbot">Need Help? Open Chatbot</span>
+        <span *ngIf="showChatbot">Close Chatbot</span>
+      </button>
+    </div>
+
+    <div class="electricity-content" [class.with-chatbot]="showChatbot">
+      <div class="purchase-form">
+        <div class="form-card">
+          <h3>Purchase Details</h3>
+          
+          <div class="form-group">
+            <label for="meterSelect">Select Meter</label>
+            <select id="meterSelect" [(ngModel)]="selectedMeter">
+              <option value="" disabled selected>Choose a meter</option>
+              <option *ngFor="let meter of meters" [value]="meter.id">
+                {{ meter.id }} ({{ meter.location }})
+              </option>
+            </select>
+          </div>
+          
+          <div class="rate-info" *ngIf="currentRate">
+            <div class="rate-name">Current Rate: {{ currentRate.rate_name }}</div>
+            <div class="rate-price">Price per Unit: TSh {{ currentRate.price_per_unit.toLocaleString() }}</div>
+            <div class="rate-date">Effective since: {{ currentRate.effective_date | date:'mediumDate' }}</div>
+          </div>
+          
+          <div class="form-group">
+            <label for="amountInput">Amount (TSh)</label>
+            <input 
+              type="number" 
+              id="amountInput" 
+              [(ngModel)]="amount" 
+              min="1" 
+              (input)="calculateUnits()"
+              placeholder="Enter amount">
+          </div>
+          
+          <div class="units-preview">
+            <div class="units-value">{{ units }} kWh</div>
+            <div class="units-label">Estimated units</div>
+            <div class="calculated-cost" *ngIf="calculatedCost">
+              <span>Calculated cost: {{ calculatedCost }}</span>
+              <span *ngIf="isCalculating">Calculating...</span>
+            </div>
+          </div>
+          
+          <div class="form-group payment-methods">
+            <label>Payment Method</label>
+            <div class="payment-options">
+              <div 
+                *ngFor="let method of paymentMethods" 
+                class="payment-option" 
+                [class.selected]="paymentMethod === method.id"
+                (click)="paymentMethod = method.id">
+                <div class="payment-icon" [ngClass]="method.id"></div>
+                <div class="payment-name">{{ method.name }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="error-message" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+          
+          <div class="form-actions">
+            <button 
+              class="btn-purchase" 
+              [disabled]="isProcessing" 
+              (click)="processPayment()">
+              <span *ngIf="!isProcessing">Complete Purchase</span>
+              <span *ngIf="isProcessing">Processing...</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <div class="info-section">
+            <h4>How it works</h4>
+            <div class="info-content">
+              <p>1. Enter the amount you wish to spend</p>
+              <p>2. Select your meter</p>
+              <p>3. Choose a payment method</p>
+              <p>4. Complete your purchase</p>
+              <p>5. Your meter will be credited immediately</p>
+            </div>
+          </div>
+          
+          <div class="info-section">
+            <h4>Need assistance?</h4>
+            <div class="info-content">
+              <p>Our chatbot can help you with common questions about electricity purchases.</p>
+              <button class="btn-secondary" (click)="toggleChatbot()">Open Chatbot</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chatbot Component -->
+      <div class="chatbot-container" *ngIf="showChatbot">
+        <app-chatbot></app-chatbot>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transaction Complete -->
+  <div class="transaction-success" *ngIf="transactionComplete">
+    <div class="success-icon">✓</div>
+    <h2>Purchase Successful!</h2>
+    <div class="success-details">
+      <div class="detail-item">
+        <div class="detail-label">Transaction ID</div>
+        <div class="detail-value">{{ transactionId }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Amount</div>
+        <div class="detail-value">${{ amount }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Units Purchased</div>
+        <div class="detail-value">{{ units }} kWh</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Meter ID</div>
+        <div class="detail-value">{{ selectedMeter }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Payment Method</div>
+        <div class="detail-value">{{ paymentMethod }}</div>
+      </div>
+    </div>
+    <div class="success-actions">
+      <button class="btn-primary" (click)="resetForm()">Make Another Purchase</button>
+    </div>
+  </div>
+</div>

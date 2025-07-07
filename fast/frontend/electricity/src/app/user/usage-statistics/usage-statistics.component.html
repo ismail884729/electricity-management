@@ -1,0 +1,147 @@
+<div class="statistics-container">
+  <div class="section-header">
+    <h2>Usage Statistics</h2>
+    <div class="view-selector">
+      <button [class.active]="activeView === 'day'" (click)="setActiveView('day')">Daily</button>
+      <button [class.active]="activeView === 'week'" (click)="setActiveView('week')">Weekly</button>
+      <button [class.active]="activeView === 'month'" (click)="setActiveView('month')">Monthly</button>
+    </div>
+  </div>
+
+  <div class="statistics-layout">
+    <!-- Main Chart Section -->
+    <div class="chart-section">
+      <div class="chart-header">
+        <h3 *ngIf="activeView === 'day'">Daily Consumption (Last 7 Days)</h3>
+        <h3 *ngIf="activeView === 'week'">Weekly Consumption (Last 4 Weeks)</h3>
+        <h3 *ngIf="activeView === 'month'">Monthly Comparison (Last 6 Months)</h3>
+      </div>
+      
+      <!-- Daily Chart -->
+      <div class="chart-content" *ngIf="activeView === 'day'">
+        <div class="chart-container">
+          <div class="chart-bars">
+            <div class="chart-bar" *ngFor="let day of dailyUsage">
+              <div class="bar-value" [style.height.%]="getChartPercentage(day.consumption, getMaxConsumption())">
+                <span class="value-tooltip">{{ day.consumption }} kWh<br>${{ day.cost }}</span>
+              </div>
+              <div class="bar-label">{{ formatDate(day.date) }}</div>
+            </div>
+          </div>
+          <div class="chart-y-axis">
+            <div class="axis-label">kWh</div>
+          </div>
+        </div>
+        
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-color daily"></div>
+            <div class="legend-text">Daily Consumption (kWh)</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Weekly Chart -->
+      <div class="chart-content" *ngIf="activeView === 'week'">
+        <div class="chart-container">
+          <div class="chart-bars">
+            <div class="chart-bar" *ngFor="let week of weeklyUsage">
+              <div class="bar-value weekly" [style.height.%]="getChartPercentage(week.consumption, getMaxConsumption())">
+                <span class="value-tooltip">{{ week.consumption }} kWh<br>${{ week.cost }}</span>
+              </div>
+              <div class="bar-label">Week {{ 4 - weeklyUsage.indexOf(week) }}</div>
+            </div>
+          </div>
+          <div class="chart-y-axis">
+            <div class="axis-label">kWh</div>
+          </div>
+        </div>
+        
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-color weekly"></div>
+            <div class="legend-text">Weekly Consumption (kWh)</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Monthly Chart -->
+      <div class="chart-content" *ngIf="activeView === 'month'">
+        <div class="chart-container">
+          <div class="chart-bars">
+            <div class="chart-bar-group" *ngFor="let month of monthlyComparison">
+              <div class="bar-value current-year" [style.height.%]="getChartPercentage(month.currentYear, getMaxConsumption())">
+                <span class="value-tooltip">{{ month.currentYear }} kWh<br>This Year</span>
+              </div>
+              <div class="bar-value previous-year" [style.height.%]="getChartPercentage(month.previousYear, getMaxConsumption())">
+                <span class="value-tooltip">{{ month.previousYear }} kWh<br>Last Year</span>
+              </div>
+              <div class="bar-label">
+                {{ month.month }}
+                <span class="percentage-change" [ngClass]="{'positive': month.percentChange > 0, 'negative': month.percentChange < 0}">
+                  {{ month.percentChange > 0 ? '+' : '' }}{{ month.percentChange }}%
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-y-axis">
+            <div class="axis-label">kWh</div>
+          </div>
+        </div>
+        
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-color current-year"></div>
+            <div class="legend-text">Current Year</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color previous-year"></div>
+            <div class="legend-text">Previous Year</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="statistics-summary">
+      <h3>Summary</h3>
+      
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="card-label">Total Consumption</div>
+          <div class="card-value">{{ totalConsumption }} kWh</div>
+          <div class="card-period">Past 7 Days</div>
+        </div>
+        
+        <div class="summary-card">
+          <div class="card-label">Average Daily</div>
+          <div class="card-value">{{ averageDaily }} kWh</div>
+          <div class="card-period">Past 7 Days</div>
+        </div>
+        
+        <div class="summary-card">
+          <div class="card-label">Total Cost</div>
+          <div class="card-value">${{ totalCost.toFixed(2) }}</div>
+          <div class="card-period">Past 7 Days</div>
+        </div>
+        
+        <div class="summary-card">
+          <div class="card-label">Highest Usage</div>
+          <div class="card-value">{{ highestUsage }} kWh</div>
+          <div class="card-period">{{ formatDate(highestUsageDay) }}</div>
+        </div>
+      </div>
+      
+      <div class="energy-tips">
+        <h4>Energy Saving Tips</h4>
+        <ul>
+          <li>Turn off lights when not in use</li>
+          <li>Unplug electronics when not using them</li>
+          <li>Use energy-efficient appliances</li>
+          <li>Adjust your thermostat by a few degrees</li>
+          <li>Replace incandescent bulbs with LED bulbs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

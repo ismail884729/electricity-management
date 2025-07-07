@@ -1,0 +1,90 @@
+<div class="admin-reports-container">
+  <div class="page-header">
+    <h1>Reports & Analytics</h1>
+    <p>View detailed reports and analytics for system performance</p>
+  </div>
+
+  <!-- Report Configuration -->
+  <div class="report-controls">
+    <div class="control-group">
+      <label>Report Type:</label>
+      <select [(ngModel)]="selectedReportType">
+        <option value="consumption">Energy Consumption</option>
+        <option value="revenue">Revenue Report</option>
+        <option value="users">User Analytics</option>
+        <option value="devices">Device Status</option>
+        <option value="outages">System Outages</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label>Time Period:</label>
+      <select [(ngModel)]="selectedTimePeriod">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="quarterly">Quarterly</option>
+        <option value="yearly">Yearly</option>
+        <option value="custom">Custom Range</option>
+      </select>
+    </div>
+    
+    <div class="control-group" *ngIf="selectedTimePeriod === 'custom'">
+      <label>Date Range:</label>
+      <input type="date" [(ngModel)]="startDate">
+      <span>to</span>
+      <input type="date" [(ngModel)]="endDate">
+    </div>
+    
+    <button class="btn-generate" (click)="generateReport()">Generate Report</button>
+  </div>
+
+  <!-- Report Summary -->
+  <div class="report-summary" *ngIf="reportGenerated">
+    <h2>{{ getReportTitle() }}</h2>
+    
+    <div class="summary-cards">
+      <div class="summary-card" *ngFor="let item of [1, 2, 3]; let i = index">
+        <h3>{{ getSummaryLabel(i + 1) }}</h3>
+        <p class="summary-value">{{ getSummaryValue(i + 1) }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Table -->
+  <div class="report-table-container" *ngIf="reportGenerated">
+    <div class="table-header">
+      <h3>Report Data</h3>
+      <button class="btn-export" (click)="exportReport()">Export Report</button>
+    </div>
+    
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th *ngFor="let header of getTableHeaders()">{{ header }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of getTableData()">
+          <td *ngFor="let cell of row">{{ cell }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Chart Placeholder -->
+  <div class="chart-container" *ngIf="reportGenerated">
+    <h3>{{ getChartTitle() }}</h3>
+    <div class="chart-placeholder">
+      <p>📊 Chart visualization would appear here</p>
+      <p class="chart-note">Data points: {{ getMockChartData().length }}</p>
+      <p class="chart-labels">Labels: {{ getMockChartLabels().join(', ') }}</p>
+    </div>
+  </div>
+
+  <!-- No Report Message -->
+  <div class="no-report" *ngIf="!reportGenerated">
+    <h3>No Report Generated</h3>
+    <p>Select report type and time period, then click "Generate Report" to view analytics.</p>
+  </div>
+</div>

@@ -1,0 +1,150 @@
+<div class="admin-dashboard-container">
+  <div class="dashboard-header">
+    <h1>Admin Dashboard</h1>
+    <p>Overview of system performance and metrics</p>
+    <div class="date-filter">
+      <span>Date Range:</span>
+      <select (change)="updateDateRange($event)">
+        <option value="today">Today</option>
+        <option value="yesterday">Yesterday</option>
+        <option value="week" selected>This Week</option>
+        <option value="month">This Month</option>
+        <option value="quarter">This Quarter</option>
+        <option value="year">This Year</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Key Metrics Section -->
+  <div class="key-metrics-section">
+    <div class="metric-card consumption">
+      <div class="metric-icon">
+        <i class="fas fa-bolt"></i>
+      </div>
+      <div class="metric-details">
+        <h3>Total Consumption</h3>
+        <p class="metric-value">215,678 kWh</p>
+        <p class="metric-change positive">+4.3% from previous period</p>
+      </div>
+    </div>
+    
+    <div class="metric-card revenue">
+      <div class="metric-icon">
+        <i class="fas fa-dollar-sign"></i>
+      </div>
+      <div class="metric-details">
+        <h3>Total Revenue</h3>
+        <p class="metric-value">$187,452</p>
+        <p class="metric-change positive">+5.7% from previous period</p>
+      </div>
+    </div>
+    
+    <div class="metric-card users">
+      <div class="metric-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="metric-details">
+        <h3>Total Users</h3>
+        <p class="metric-value">8,762</p>
+        <p class="metric-change positive">+2.9% from previous period</p>
+      </div>
+    </div>
+    
+    <div class="metric-card devices">
+      <div class="metric-icon">
+        <i class="fas fa-plug"></i>
+      </div>
+      <div class="metric-details">
+        <h3>Active Devices</h3>
+        <p class="metric-value">12,489</p>
+        <p class="metric-change positive">+3.8% from previous period</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="dashboard-charts">
+    <div class="chart-container consumption-chart">
+      <h2>Electricity Consumption Trend</h2>
+      <div class="chart-placeholder">
+        <!-- In a real app, this would be a chart component -->
+        <div class="chart-area">
+          <div class="chart-bar" *ngFor="let value of consumptionData; let i = index" 
+               [style.height]="value + '%'" 
+               [attr.data-value]="value">
+          </div>
+        </div>
+        <div class="chart-labels">
+          <span *ngFor="let label of timeLabels">{{ label }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="chart-container revenue-chart">
+      <h2>Revenue Distribution</h2>
+      <div class="chart-placeholder">
+        <!-- In a real app, this would be a pie chart component -->
+        <div class="pie-chart">
+          <div class="pie-segment" *ngFor="let segment of revenueDistribution; let i = index"
+               [style.background]="segment.color"
+               [style.transform]="'rotate(' + segment.rotation + 'deg)'"
+               [style.clip-path]="'polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0)'"
+               [style.transform-origin]="'50% 50%'">
+          </div>
+          <div class="pie-center"></div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item" *ngFor="let item of revenueDistribution">
+            <div class="legend-color" [style.background]="item.color"></div>
+            <span>{{ item.label }}: {{ item.percentage }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity Section -->
+  <div class="recent-activity">
+    <h2>Recent Activity</h2>
+    <table class="activity-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>User</th>
+          <th>Activity</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let activity of recentActivities">
+          <td>{{ activity.time }}</td>
+          <td>{{ activity.user }}</td>
+          <td>{{ activity.action }}</td>
+          <td>{{ activity.details }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="view-all">
+      <a href="#">View All Activities</a>
+    </div>
+  </div>
+
+  <!-- System Status Section -->
+  <div class="system-status">
+    <h2>System Status</h2>
+    <div class="status-items">
+      <div class="status-item" *ngFor="let status of systemStatuses">
+        <div class="status-icon" [ngClass]="status.status">
+          <i class="fas" [ngClass]="status.icon"></i>
+        </div>
+        <div class="status-details">
+          <h4>{{ status.name }}</h4>
+          <p>{{ status.description }}</p>
+        </div>
+        <div class="status-badge" [ngClass]="status.status">
+          {{ status.status }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,118 @@
+<div class="support-container">
+  <div class="section-header">
+    <h2>Customer Support</h2>
+  </div>
+
+  <div class="support-content">
+    <!-- Support Ticket Section -->
+    <div class="ticket-section">
+      <div *ngIf="!ticketSubmitted" class="ticket-form">
+        <h3>Submit a Support Ticket</h3>
+        
+        <div class="form-group">
+          <label for="ticketCategory">Category</label>
+          <select id="ticketCategory" [(ngModel)]="supportTicket.category">
+            <option value="" disabled selected>Select a category</option>
+            <option value="billing">Billing Issue</option>
+            <option value="technical">Technical Issue</option>
+            <option value="account">Account Management</option>
+            <option value="service">Service Disruption</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="ticketPriority">Priority</label>
+          <select id="ticketPriority" [(ngModel)]="supportTicket.priority">
+            <option value="" disabled selected>Select priority</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="ticketSubject">Subject</label>
+          <input type="text" id="ticketSubject" [(ngModel)]="supportTicket.subject" placeholder="Brief description of your issue">
+        </div>
+        
+        <div class="form-group">
+          <label for="ticketMessage">Message</label>
+          <textarea id="ticketMessage" rows="6" [(ngModel)]="supportTicket.message" placeholder="Please provide detailed information about your issue..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="ticketAttachment">Attachment (optional)</label>
+          <input type="file" id="ticketAttachment" (change)="handleFileInput($event)">
+          <div class="file-help">You can attach screenshots, documents, or other files related to your issue.</div>
+        </div>
+        
+        <div class="ticket-actions">
+          <button class="submit-ticket" (click)="submitTicket()">Submit Ticket</button>
+        </div>
+      </div>
+      
+      <div *ngIf="ticketSubmitted" class="ticket-confirmation">
+        <div class="confirmation-icon">✓</div>
+        <h3>Ticket Submitted Successfully</h3>
+        <div class="ticket-details">
+          <p>Your ticket has been received and will be addressed by our support team. You will receive updates via email.</p>
+          <div class="ticket-id">Ticket ID: <span>{{ ticketId }}</span></div>
+          <p>Please save this ticket ID for reference when contacting our support team.</p>
+        </div>
+        <div class="confirmation-actions">
+          <button class="new-ticket" (click)="createNewTicket()">Create New Ticket</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="faq-section">
+      <h3>Frequently Asked Questions</h3>
+      
+      <div class="faq-list">
+        <div class="faq-item" *ngFor="let faq of faqItems">
+          <div class="faq-question" (click)="toggleFaq(faq)">
+            {{ faq.question }}
+            <span class="faq-toggle" [class.expanded]="faq.expanded">&#x25BC;</span>
+          </div>
+          <div class="faq-answer" [class.expanded]="faq.expanded">
+            {{ faq.answer }}
+          </div>
+        </div>
+      </div>
+      
+      <div class="contact-info">
+        <h4>Contact Information</h4>
+        <div class="contact-methods">
+          <div class="contact-method">
+            <div class="contact-icon phone">📞</div>
+            <div class="contact-details">
+              <div class="contact-label">Phone Support</div>
+              <div class="contact-value">1-800-ELECTRIC (1-800-353-2874)</div>
+              <div class="contact-hours">Available 24/7</div>
+            </div>
+          </div>
+          
+          <div class="contact-method">
+            <div class="contact-icon email">✉️</div>
+            <div class="contact-details">
+              <div class="contact-label">Email Support</div>
+              <div class="contact-value">support&#64;electricityservice.com</div>
+              <div class="contact-hours">Response within 24 hours</div>
+            </div>
+          </div>
+          
+          <div class="contact-method">
+            <div class="contact-icon chat">💬</div>
+            <div class="contact-details">
+              <div class="contact-label">Live Chat</div>
+              <div class="contact-value">Available on our website</div>
+              <div class="contact-hours">Mon-Fri, 8am - 8pm</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

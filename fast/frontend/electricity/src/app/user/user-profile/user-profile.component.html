@@ -1,0 +1,159 @@
+<div class="profile-container" *ngIf="currentUser">
+  <div class="section-header">
+    <h2>My Profile</h2>
+    <button *ngIf="!editMode" (click)="toggleEditMode()" class="edit-button">Edit Profile</button>
+    <div *ngIf="editMode" class="edit-actions">
+      <button (click)="saveProfile()" class="save-button" [disabled]="isSaving || profileForm.invalid">
+        <span *ngIf="isSaving">Saving...</span>
+        <span *ngIf="!isSaving">Save Changes</span>
+      </button>
+      <button (click)="toggleEditMode()" class="cancel-button" [disabled]="isSaving">Cancel</button>
+    </div>
+  </div>
+
+  <!-- We'll use SweetAlert for messages instead of these elements -->
+  <!-- <div *ngIf="saveSuccess" class="success-message">
+    Profile updated successfully!
+  </div>
+  
+  <div *ngIf="saveError" class="error-message">
+    {{ saveError }}
+  </div> -->
+
+  <div class="profile-card">
+    <div class="profile-header">
+      <div class="profile-avatar">
+        <span>{{ currentUser.full_name.charAt(0) }}</span>
+      </div>
+      <div class="profile-info">
+        <h3>{{ currentUser.full_name }}</h3>
+        <p class="account-number">Account #: {{ currentUser.id }}</p>
+        <p class="joined-date">Member since: {{ formatDate(currentUser.created_at) }}</p>
+        <p class="account-balance">Balance: {{ formatCurrency(currentUser.unit_balance) }}</p>
+      </div>
+    </div>
+
+    <div class="profile-details">
+      <form [formGroup]="profileForm">
+        <div class="form-group">
+          <label for="full_name">Full Name</label>
+          <input type="text" id="full_name" formControlName="full_name" [class.editable]="editMode">
+          <div *ngIf="profileForm.get('full_name')?.invalid && (profileForm.get('full_name')?.dirty || profileForm.get('full_name')?.touched)" class="error-text">
+            Full name is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" formControlName="email" [class.editable]="editMode">
+          <div *ngIf="profileForm.get('email')?.invalid && (profileForm.get('email')?.dirty || profileForm.get('email')?.touched)" class="error-text">
+            Please enter a valid email address
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone_number">Phone Number</label>
+          <input type="tel" id="phone_number" formControlName="phone_number" [class.editable]="editMode">
+          <div *ngIf="profileForm.get('phone_number')?.invalid && (profileForm.get('phone_number')?.dirty || profileForm.get('phone_number')?.touched)" class="error-text">
+            Phone number is required
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="security-section">
+      <h4>Security Settings</h4>
+      <div class="security-options">
+        <button class="security-button" (click)="togglePasswordModal()">Change Password</button>
+        <button class="security-button" disabled>Two-Factor Authentication</button>
+      </div>
+    </div>
+
+    <div class="user-details-section">
+      <h4>Account Details</h4>
+      <div class="user-details-info">
+        <div class="detail-row">
+          <span class="detail-label">Username:</span>
+          <span class="detail-value">{{ currentUser.username }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Role:</span>
+          <span class="detail-value">{{ currentUser.role }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Account Status:</span>
+          <span class="detail-value" [class.active-status]="currentUser.is_active" [class.inactive-status]="!currentUser.is_active">
+            {{ currentUser.is_active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">My Devices:</span>
+          <span class="detail-value">
+            <a routerLink="/user/device-details" class="view-devices-link">View My Devices</a>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="session-info">
+      <p>Last updated: {{ formatDate(currentUser.updated_at) }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Password Change Modal -->
+<div class="modal-overlay" *ngIf="showPasswordModal">
+  <div class="password-modal">
+    <div class="modal-header">
+      <h3>Change Password</h3>
+      <button class="close-button" (click)="togglePasswordModal()">&times;</button>
+    </div>
+    
+    <!-- We'll use SweetAlert for messages instead of these elements -->
+    <!-- <div *ngIf="passwordChangeSuccess" class="success-message">
+      Password changed successfully!
+    </div>
+    
+    <div *ngIf="passwordChangeError" class="error-message">
+      {{ passwordChangeError }}
+    </div> -->
+    
+    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+      <div class="form-group">
+        <label for="current_password">Current Password</label>
+        <input type="password" id="current_password" formControlName="current_password" class="editable">
+        <div *ngIf="passwordForm.get('current_password')?.invalid && (passwordForm.get('current_password')?.dirty || passwordForm.get('current_password')?.touched)" class="error-text">
+          Current password is required
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="new_password">New Password</label>
+        <input type="password" id="new_password" formControlName="new_password" class="editable">
+        <div *ngIf="passwordForm.get('new_password')?.invalid && (passwordForm.get('new_password')?.dirty || passwordForm.get('new_password')?.touched)" class="error-text">
+          <span *ngIf="passwordForm.get('new_password')?.errors?.['required']">New password is required</span>
+          <span *ngIf="passwordForm.get('new_password')?.errors?.['minlength']">Password must be at least 8 characters</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" id="confirm_password" formControlName="confirm_password" class="editable">
+        <div *ngIf="passwordForm.get('confirm_password')?.invalid && (passwordForm.get('confirm_password')?.dirty || passwordForm.get('confirm_password')?.touched)" class="error-text">
+          Confirm password is required
+        </div>
+        <div *ngIf="passwordForm.hasError('passwordMismatch') && passwordForm.get('confirm_password')?.dirty" class="error-text">
+          Passwords do not match
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" class="cancel-button" (click)="togglePasswordModal()" [disabled]="isChangingPassword">Cancel</button>
+        <button type="submit" class="save-button" [disabled]="passwordForm.invalid || isChangingPassword">
+          <span *ngIf="isChangingPassword">Changing...</span>
+          <span *ngIf="!isChangingPassword">Change Password</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

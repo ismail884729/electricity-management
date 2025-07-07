@@ -1,0 +1,120 @@
+<div class="admin-rate-plans-container">
+  <header class="section-header">
+    <h1>Rate Plans Management</h1>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="showAddPlanForm()">
+        <i class="fas fa-plus"></i> Add New Rate Plan
+      </button>
+      <div class="search-box">
+        <input type="text" placeholder="Search rate plans..." 
+               [(ngModel)]="searchTerm" 
+               (input)="filterPlans()">
+        <i class="fas fa-search"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- Rate Plans Table -->
+  <div class="table-container">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Plan ID</th>
+          <th>Plan Name</th>
+          <th>Type</th>
+          <th>Base Rate</th>
+          <th>Peak Rate</th>
+          <th>Off-Peak Rate</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Loop through rate plans -->
+        <tr *ngFor="let plan of filteredRatePlans">
+          <td>{{ plan.id }}</td>
+          <td>{{ plan.name }}</td>
+          <td>{{ plan.type }}</td>
+          <td>{{ plan.baseRate | currency:'USD':'symbol':'1.2-2' }}/kWh</td>
+          <td>{{ plan.peakRate | currency:'USD':'symbol':'1.2-2' }}/kWh</td>
+          <td>{{ plan.offPeakRate | currency:'USD':'symbol':'1.2-2' }}/kWh</td>
+          <td>
+            <span class="status-badge" [ngClass]="{'active': plan.status === 'Active', 'inactive': plan.status === 'Inactive'}">
+              {{ plan.status }}
+            </span>
+          </td>
+          <td class="action-buttons">
+            <button class="btn btn-sm btn-info" (click)="editPlan(plan)">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger" (click)="deletePlan(plan.id)">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredRatePlans.length === 0">
+          <td colspan="8" class="text-center">No rate plans found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add/Edit Plan Form (Hidden by default) -->
+  <div class="modal" [ngClass]="{'show': showPlanForm}">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>{{ isEditMode ? 'Edit Rate Plan' : 'Add New Rate Plan' }}</h2>
+          <button class="close-btn" (click)="cancelForm()">×</button>
+        </div>
+        <div class="modal-body">
+          <form (ngSubmit)="savePlan()">
+            <div class="form-group">
+              <label for="planName">Plan Name</label>
+              <input type="text" id="planName" [(ngModel)]="currentPlan.name" name="planName" required>
+            </div>
+            <div class="form-group">
+              <label for="planType">Plan Type</label>
+              <select id="planType" [(ngModel)]="currentPlan.type" name="planType" required>
+                <option value="Fixed">Fixed Rate</option>
+                <option value="Time-of-Use">Time-of-Use</option>
+                <option value="Seasonal">Seasonal</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Industrial">Industrial</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="baseRate">Base Rate ($/kWh)</label>
+              <input type="number" id="baseRate" [(ngModel)]="currentPlan.baseRate" name="baseRate" step="0.001" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="peakRate">Peak Rate ($/kWh)</label>
+                <input type="number" id="peakRate" [(ngModel)]="currentPlan.peakRate" name="peakRate" step="0.001" required>
+              </div>
+              <div class="form-group col-md-6">
+                <label for="offPeakRate">Off-Peak Rate ($/kWh)</label>
+                <input type="number" id="offPeakRate" [(ngModel)]="currentPlan.offPeakRate" name="offPeakRate" step="0.001" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="planStatus">Status</label>
+              <select id="planStatus" [(ngModel)]="currentPlan.status" name="planStatus" required>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="planDescription">Description</label>
+              <textarea id="planDescription" [(ngModel)]="currentPlan.description" name="planDescription" rows="3"></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+              <button type="submit" class="btn btn-primary">{{ isEditMode ? 'Update' : 'Add' }} Plan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

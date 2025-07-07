@@ -1,0 +1,62 @@
+<div class="admin-users-container">
+  <div class="page-header">
+    <h1>User Management</h1>
+    <p>Manage all registered users in the system</p>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="search-section">
+    <div class="search-bar">
+      <input 
+        type="text" 
+        placeholder="Search users by name, email, or ID..." 
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="searchUsers()">
+      <button class="search-btn" (click)="searchUsers()">Search</button>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="users-table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th>Join Date</th>
+          <th>Account Type</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td>{{ user.id }}</td>
+          <td>{{ user.firstName }} {{ user.lastName }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.phone }}</td>
+          <td>
+            <span class="status-badge" [class.active]="user.status === 'Active'" [class.inactive]="user.status === 'Inactive'">
+              {{ user.status }}
+            </span>
+          </td>
+          <td>{{ user.joinDate }}</td>
+          <td>{{ user.accountType }}</td>
+          <td>
+            <button class="action-btn view" (click)="viewUserDetails(user)">View</button>
+            <button class="action-btn edit" (click)="editUser(user)">Edit</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next</button>
+    </div>
+  </div>
+</div>

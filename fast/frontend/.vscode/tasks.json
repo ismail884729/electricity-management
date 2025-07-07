@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Angular Development Server",
+			"type": "shell",
+			"command": "cd c:\\Users\\user\\Documents\\fyp\\fast\\frontend\\electricity && npm start",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			]
+		}
+	]
+}

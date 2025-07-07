@@ -1,0 +1,77 @@
+<div class="login-container">
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+    <h2>Welcome Back</h2>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Username Field -->
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input
+        type="text"
+        id="username"
+        formControlName="username"
+        placeholder="Enter your username"
+        [class.is-invalid]="username?.invalid && (username?.dirty || username?.touched)"
+      />
+      <div *ngIf="username?.invalid && (username?.dirty || username?.touched)" class="validation-error">
+        <div *ngIf="username?.errors?.['required']">Username is required</div>
+      </div>
+    </div>
+
+    <!-- Password Field -->
+    <div class="form-group password-field">
+      <label for="password">Password</label>
+      <input
+        [type]="showPassword ? 'text' : 'password'"
+        id="password"
+        formControlName="password"
+        placeholder="Enter your password"
+        [class.is-invalid]="password?.invalid && (password?.dirty || password?.touched)"
+      />
+      <button 
+        type="button" 
+        class="password-toggle" 
+        (click)="togglePasswordVisibility()"
+        tabindex="-1"
+      >
+        <span *ngIf="!showPassword">👁️</span>
+        <span *ngIf="showPassword">🔒</span>
+      </button>
+      <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="validation-error">
+        <div *ngIf="password?.errors?.['required']">Password is required</div>
+      </div>
+    </div>
+
+    <!-- Remember Me & Forgot Password -->
+    <div class="form-extras">
+      <div class="checkbox-container">
+        <input type="checkbox" id="remember" formControlName="rememberMe" />
+        <label for="remember">Remember me</label>
+      </div>
+      <!-- <a href="#" (click)="$event.preventDefault(); forgotPassword()">Forgot password?</a> -->
+    </div>
+
+    <!-- Submit Button -->
+    <button 
+      type="submit" 
+      [disabled]="loginForm.invalid || isLoading"
+      class="login-button"
+    >
+      {{ isLoading ? 'Logging in...' : 'Login' }}
+    </button>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Registration Link -->
+    <!-- <div class="form-footer">
+      Don't have an account? <a routerLink="/register">Register here</a>
+    </div> -->
+  </form>
+</div>

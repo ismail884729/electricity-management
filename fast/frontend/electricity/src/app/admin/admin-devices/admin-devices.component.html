@@ -1,0 +1,242 @@
+<div class="admin-devices-container">
+  <div class="devices-header">
+    <h1>Device Management</h1>
+    <p>Monitor and manage all registered electricity meters and smart devices</p>
+  </div>
+  
+  <!-- Search and Filter Section -->
+  <div class="devices-controls">
+    <div class="search-box">
+      <input 
+        type="text" 
+        placeholder="Search by device ID, location, or user..." 
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="searchDevices()">
+      <button class="search-btn" (click)="searchDevices()">
+        <i class="fas fa-search"></i>
+      </button>
+    </div>
+    
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label>Status:</label>
+        <select [(ngModel)]="statusFilter" (change)="filterDevices()">
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="error">Error</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>Type:</label>
+        <select [(ngModel)]="typeFilter" (change)="filterDevices()">
+          <option value="all">All Types</option>
+          <option value="smart-meter">Smart Meter</option>
+          <option value="solar-inverter">Solar Inverter</option>
+          <option value="battery">Battery System</option>
+          <option value="ev-charger">EV Charger</option>
+        </select>
+      </div>
+      
+      <button class="refresh-btn" (click)="refreshDevices()">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
+    </div>
+  </div>
+  
+  <!-- Devices Table -->
+  <div class="devices-table-container">
+    <table class="devices-table">
+      <thead>
+        <tr>
+          <th>Device ID</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Owner</th>
+          <th>Last Reading</th>
+          <th>Status</th>
+          <th>Last Connected</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let device of filteredDevices">
+          <td>{{ device.id }}</td>
+          <td>{{ device.type }}</td>
+          <td>{{ device.location }}</td>
+          <td>{{ device.owner }}</td>
+          <td>{{ device.lastReading }} {{ device.unit }}</td>
+          <td>
+            <span class="status-indicator" [ngClass]="device.status">
+              {{ device.status }}
+            </span>
+          </td>
+          <td>{{ device.lastConnected }}</td>
+          <td class="actions-cell">
+            <button class="action-btn view" (click)="viewDeviceDetails(device)">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="action-btn edit" (click)="editDevice(device)">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn diagnose" (click)="diagnoseDevice(device)">
+              <i class="fas fa-stethoscope"></i>
+            </button>
+            <button class="action-btn" [ngClass]="device.status === 'active' ? 'deactivate' : 'activate'"
+                    (click)="toggleDeviceStatus(device)">
+              <i class="fas" [ngClass]="device.status === 'active' ? 'fa-power-off' : 'fa-play'"></i>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredDevices.length === 0">
+          <td colspan="8" class="no-data">
+            No devices found matching the current filters.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Pagination -->
+  <div class="pagination">
+    <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+      <i class="fas fa-chevron-left"></i> Previous
+    </button>
+    <div class="page-info">
+      Page {{ currentPage }} of {{ totalPages }}
+    </div>
+    <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+      Next <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+  
+  <!-- Device Details Modal -->
+  <div class="modal" [class.visible]="showDeviceModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>{{ modalTitle }}</h2>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedDevice">
+        <!-- Device Details View -->
+        <div *ngIf="modalMode === 'view'" class="device-details">
+          <div class="detail-row">
+            <strong>Device ID:</strong> {{ selectedDevice.id }}
+          </div>
+          <div class="detail-row">
+            <strong>Type:</strong> {{ selectedDevice.type }}
+          </div>
+          <div class="detail-row">
+            <strong>Model:</strong> {{ selectedDevice.model }}
+          </div>
+          <div class="detail-row">
+            <strong>Serial Number:</strong> {{ selectedDevice.serialNumber }}
+          </div>
+          <div class="detail-row">
+            <strong>Installation Date:</strong> {{ selectedDevice.installationDate }}
+          </div>
+          <div class="detail-row">
+            <strong>Location:</strong> {{ selectedDevice.location }}
+          </div>
+          <div class="detail-row">
+            <strong>Owner:</strong> {{ selectedDevice.owner }}
+          </div>
+          <div class="detail-row">
+            <strong>Status:</strong> {{ selectedDevice.status }}
+          </div>
+          <div class="detail-row">
+            <strong>Last Reading:</strong> {{ selectedDevice.lastReading }} {{ selectedDevice.unit }}
+          </div>
+          <div class="detail-row">
+            <strong>Last Connected:</strong> {{ selectedDevice.lastConnected }}
+          </div>
+          <div class="detail-row">
+            <strong>Firmware Version:</strong> {{ selectedDevice.firmwareVersion }}
+          </div>
+          
+          <h3>Recent Readings</h3>
+          <div class="readings-chart">
+            <!-- Chart would go here in a real implementation -->
+            <div class="chart-placeholder">
+              Energy consumption chart would display here
+            </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button class="btn secondary" (click)="closeModal()">Close</button>
+            <button class="btn primary" (click)="switchToEditMode()">Edit Device</button>
+          </div>
+        </div>
+        
+        <!-- Device Edit Form -->
+        <div *ngIf="modalMode === 'edit'" class="device-edit-form">
+          <form (ngSubmit)="saveDeviceChanges()">
+            <div class="form-group">
+              <label for="deviceType">Device Type</label>
+              <select id="deviceType" name="type" [(ngModel)]="selectedDevice.type">
+                <option value="smart-meter">Smart Meter</option>
+                <option value="solar-inverter">Solar Inverter</option>
+                <option value="battery">Battery System</option>
+                <option value="ev-charger">EV Charger</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="deviceLocation">Location</label>
+              <input type="text" id="deviceLocation" name="location" 
+                     [(ngModel)]="selectedDevice.location">
+            </div>
+            
+            <div class="form-group">
+              <label for="deviceStatus">Status</label>
+              <select id="deviceStatus" name="status" [(ngModel)]="selectedDevice.status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="error">Error</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="deviceOwner">Owner (User ID)</label>
+              <input type="text" id="deviceOwner" name="owner" 
+                     [(ngModel)]="selectedDevice.owner">
+            </div>
+            
+            <div class="form-group">
+              <label for="deviceFirmware">Firmware Version</label>
+              <input type="text" id="deviceFirmware" name="firmwareVersion" 
+                     [(ngModel)]="selectedDevice.firmwareVersion">
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" class="btn secondary" (click)="closeModal()">Cancel</button>
+              <button type="submit" class="btn primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Device Diagnostics View -->
+        <div *ngIf="modalMode === 'diagnose'" class="device-diagnostics">
+          <div class="diagnostic-status">
+            <h3>Diagnostic Status</h3>
+            <div class="status-indicator running">Running diagnostics...</div>
+          </div>
+          
+          <div class="diagnostic-results">
+            <div class="diagnostic-item" *ngFor="let test of diagnosticTests">
+              <div class="test-name">{{ test.name }}</div>
+              <div class="test-status" [ngClass]="test.status">{{ test.status }}</div>
+            </div>
+          </div>
+          
+          <div class="diagnostic-actions">
+            <button class="btn secondary" (click)="closeModal()">Close</button>
+            <button class="btn primary" (click)="runFullDiagnostic()">Run Full Diagnostic</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

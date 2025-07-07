@@ -1,0 +1,90 @@
+<div class="admin-billing-container">
+  <div class="page-header">
+    <h1>Billing Management</h1>
+    <p>Manage customer bills and payment tracking</p>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <h3>Total Bills</h3>
+      <p class="amount">${{ totalAmount.toFixed(2) }}</p>
+    </div>
+    <div class="summary-card">
+      <h3>Paid Amount</h3>
+      <p class="amount paid">${{ paidAmount.toFixed(2) }}</p>
+    </div>
+    <div class="summary-card">
+      <h3>Pending Amount</h3>
+      <p class="amount pending">${{ pendingAmount.toFixed(2) }}</p>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="search-section">
+    <div class="search-bar">
+      <input 
+        type="text" 
+        placeholder="Search bills by bill number, user name, or ID..." 
+        #searchInput
+        (keyup.enter)="searchBills()">
+      <select #statusSelect (change)="filterByStatus()">
+        <option value="">All Status</option>
+        <option value="Paid">Paid</option>
+        <option value="Pending">Pending</option>
+        <option value="Overdue">Overdue</option>
+      </select>
+      <button class="search-btn" (click)="searchBills()">Search</button>
+    </div>
+  </div>
+
+  <!-- Bills Table -->
+  <div class="bills-table-container">
+    <table class="bills-table">
+      <thead>
+        <tr>
+          <th>Bill Number</th>
+          <th>User Name</th>
+          <th>Amount</th>
+          <th>Units Consumed</th>
+          <th>Period</th>
+          <th>Issue Date</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let bill of bills">
+          <td>{{ bill.billNumber }}</td>
+          <td>{{ bill.userName }}</td>
+          <td>${{ bill.amount.toFixed(2) }}</td>
+          <td>{{ bill.unitsConsumed }} kWh</td>
+          <td>{{ bill.period }}</td>
+          <td>{{ bill.issueDate }}</td>
+          <td>{{ bill.dueDate }}</td>
+          <td>
+            <span class="status-badge" 
+                  [class.paid]="bill.status === 'Paid'" 
+                  [class.pending]="bill.status === 'Pending'"
+                  [class.overdue]="bill.status === 'Overdue'">
+              {{ bill.status }}
+            </span>
+          </td>
+          <td>
+            <button class="action-btn view" (click)="viewBillDetails(bill)">View</button>
+            <button class="action-btn edit" (click)="editBill(bill)">Edit</button>
+            <button class="action-btn reminder" *ngIf="bill.status !== 'Paid'" (click)="sendReminder(bill)">Remind</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next</button>
+    </div>
+  </div>
+</div>
