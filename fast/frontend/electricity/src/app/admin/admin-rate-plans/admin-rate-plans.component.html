@@ -6,8 +6,8 @@
         <i class="fas fa-plus"></i> Add New Rate Plan
       </button>
       <div class="search-box">
-        <input type="text" placeholder="Search rate plans..." 
-               [(ngModel)]="searchTerm" 
+        <input type="text" placeholder="Search rate plans..."
+               [(ngModel)]="searchTerm"
                (input)="filterPlans()">
         <i class="fas fa-search"></i>
       </div>
@@ -21,10 +21,8 @@
         <tr>
           <th>Plan ID</th>
           <th>Plan Name</th>
-          <th>Type</th>
-          <th>Base Rate</th>
-          <th>Peak Rate</th>
-          <th>Off-Peak Rate</th>
+          <th>Price Per Unit</th>
+          <th>Effective Date</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -33,14 +31,12 @@
         <!-- Loop through rate plans -->
         <tr *ngFor="let plan of filteredRatePlans">
           <td>{{ plan.id }}</td>
-          <td>{{ plan.name }}</td>
-          <td>{{ plan.type }}</td>
-          <td>{{ plan.baseRate | currency:'USD':'symbol':'1.2-2' }}/kWh</td>
-          <td>{{ plan.peakRate | currency:'USD':'symbol':'1.2-2' }}/kWh</td>
-          <td>{{ plan.offPeakRate | currency:'USD':'symbol':'1.2-2' }}/kWh</td>
+          <td>{{ plan.rate_name }}</td>
+          <td>{{ plan.price_per_unit | currency:'TSh':'symbol':'1.2-2' }}/kWh</td>
+          <td>{{ plan.effective_date | date:'mediumDate' }}</td>
           <td>
-            <span class="status-badge" [ngClass]="{'active': plan.status === 'Active', 'inactive': plan.status === 'Inactive'}">
-              {{ plan.status }}
+            <span class="status-badge" [class.active]="plan.is_active" [class.inactive]="!plan.is_active" (click)="togglePlanStatus(plan)">
+              {{ plan.is_active ? 'Active' : 'Inactive' }}
             </span>
           </td>
           <td class="action-buttons">
@@ -53,7 +49,7 @@
           </td>
         </tr>
         <tr *ngIf="filteredRatePlans.length === 0">
-          <td colspan="8" class="text-center">No rate plans found.</td>
+          <td colspan="6" class="text-center">No rate plans found.</td>
         </tr>
       </tbody>
     </table>
@@ -70,43 +66,22 @@
         <div class="modal-body">
           <form (ngSubmit)="savePlan()">
             <div class="form-group">
-              <label for="planName">Plan Name</label>
-              <input type="text" id="planName" [(ngModel)]="currentPlan.name" name="planName" required>
+              <label for="rateName">Rate Name</label>
+              <input type="text" id="rateName" [(ngModel)]="currentPlan.rate_name" name="rateName" required>
             </div>
             <div class="form-group">
-              <label for="planType">Plan Type</label>
-              <select id="planType" [(ngModel)]="currentPlan.type" name="planType" required>
-                <option value="Fixed">Fixed Rate</option>
-                <option value="Time-of-Use">Time-of-Use</option>
-                <option value="Seasonal">Seasonal</option>
-                <option value="Commercial">Commercial</option>
-                <option value="Industrial">Industrial</option>
-              </select>
+              <label for="pricePerUnit">Price Per Unit (TSh/kWh)</label>
+              <input type="number" id="pricePerUnit" [(ngModel)]="currentPlan.price_per_unit" name="pricePerUnit" step="0.01" required>
             </div>
             <div class="form-group">
-              <label for="baseRate">Base Rate ($/kWh)</label>
-              <input type="number" id="baseRate" [(ngModel)]="currentPlan.baseRate" name="baseRate" step="0.001" required>
-            </div>
-            <div class="form-row">
-              <div class="form-group col-md-6">
-                <label for="peakRate">Peak Rate ($/kWh)</label>
-                <input type="number" id="peakRate" [(ngModel)]="currentPlan.peakRate" name="peakRate" step="0.001" required>
-              </div>
-              <div class="form-group col-md-6">
-                <label for="offPeakRate">Off-Peak Rate ($/kWh)</label>
-                <input type="number" id="offPeakRate" [(ngModel)]="currentPlan.offPeakRate" name="offPeakRate" step="0.001" required>
-              </div>
+              <label for="effectiveDate">Effective Date</label>
+              <input type="date" id="effectiveDate" [(ngModel)]="currentPlan.effective_date" name="effectiveDate" required>
             </div>
             <div class="form-group">
-              <label for="planStatus">Status</label>
-              <select id="planStatus" [(ngModel)]="currentPlan.status" name="planStatus" required>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="planDescription">Description</label>
-              <textarea id="planDescription" [(ngModel)]="currentPlan.description" name="planDescription" rows="3"></textarea>
+              <label>
+                <input type="checkbox" [(ngModel)]="currentPlan.is_active" name="isActive">
+                Active
+              </label>
             </div>
             <div class="form-actions">
               <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>

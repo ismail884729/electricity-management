@@ -90,25 +90,39 @@
         <div class="account-summary">
           <div class="info-card primary">
             <span class="card-label">Account Balance</span>
-            <div class="card-value">{{ formatCurrency(currentUser?.unit_balance) }}</div>
+            <div class="card-value">{{ formatCurrency(currentUser?.unit_balance, 'TSh') }}</div>
             <div class="card-footer">
               <span>Last updated: {{ currentUser?.updated_at | date:'mediumDate' || 'N/A' }}</span>
+              <button class="refresh-btn" (click)="refreshBalance()">
+                <span class="icon">🔄</span>
+              </button>
             </div>
           </div>
 
           <div class="info-card secondary">
-            <span class="card-label">Current Usage</span>
-            <div class="card-value">{{ currentUsage }} kWh</div>
+            <span class="card-label">Meter Unit Balances</span>
+            <div class="card-value-list">
+              <ng-container *ngIf="userDevices.length > 0; else noDevicesDashboard">
+                <ul class="device-list-dashboard">
+                  <li *ngFor="let device of userDevices">
+                    <strong>{{ device.device_name }} ({{ device.device_id }}):</strong> {{ formatUnits(device.unit_balance) }}
+                  </li>
+                </ul>
+              </ng-container>
+              <ng-template #noDevicesDashboard>
+                <p>No meters found for this account.</p>
+              </ng-template>
+            </div>
             <div class="card-footer">
-              <span>This month</span>
+              <span>Current unit balances</span>
             </div>
           </div>
 
           <div class="info-card tertiary">
             <span class="card-label">Estimated Remaining</span>
-            <div class="card-value">{{ estimatedDaysRemaining }} Days</div>
+            <div class="card-value">N/A</div> <!-- Removed dynamic calculation as per user request -->
             <div class="card-footer">
-              <span>Based on current usage</span>
+              <span>Based on current usage (feature removed)</span>
             </div>
           </div>
         </div>
@@ -180,30 +194,19 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Jul 3, 2025</td>
-                  <td>Electricity Token Purchase</td>
-                  <td>TSh 50,000</td>
-                  <td><span class="status success">Completed</span></td>
-                </tr>
-                <tr>
-                  <td>Jun 25, 2025</td>
-                  <td>Electricity Token Purchase</td>
-                  <td>TSh 35,000</td>
-                  <td><span class="status success">Completed</span></td>
-                </tr>
-                <tr>
-                  <td>Jun 12, 2025</td>
-                  <td>Electricity Token Purchase</td>
-                  <td>TSh 25,000</td>
-                  <td><span class="status success">Completed</span></td>
-                </tr>
-                <tr>
-                  <td>May 29, 2025</td>
-                  <td>Account Credit</td>
-                  <td>TSh 15,000</td>
-                  <td><span class="status success">Completed</span></td>
-                </tr>
+                <ng-container *ngIf="recentTransactions.length > 0; else noRecentTransactions">
+                  <tr *ngFor="let transaction of recentTransactions">
+                    <td>{{ transaction.created_at | date: 'short' }}</td>
+                    <td>{{ transaction.notes || 'Electric purchase by direct method' }}</td>
+                    <td>{{ transaction.amount | currency:'TSh':'symbol':'1.2-2' }}</td>
+                    <td><span [innerHTML]="getStatusBadge(transaction.status)"></span></td>
+                  </tr>
+                </ng-container>
+                <ng-template #noRecentTransactions>
+                  <tr>
+                    <td colspan="4" class="text-center">No recent transactions found.</td>
+                  </tr>
+                </ng-template>
               </tbody>
             </table>
           </div>
@@ -212,7 +215,7 @@
         <div class="quick-actions">
           <h3>Quick Actions</h3>
           <div class="balance-info">
-            <p>Your current balance: <strong>{{ formatCurrency(currentUser?.unit_balance) }}</strong></p>
+            <p>Your current balance: <strong>{{ formatCurrency(currentUser?.unit_balance, 'TSh') }}</strong></p>
           </div>
           <div class="action-buttons">
             <button class="action-button primary" routerLink="/user/dashboard/buy-electricity">Buy Electricity</button>

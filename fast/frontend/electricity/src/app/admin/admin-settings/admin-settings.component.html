@@ -28,38 +28,15 @@
       <div class="settings-items">
         <div class="setting-item" *ngFor="let setting of getSettingsByCategory(category)">
           <div class="setting-info">
-            <label>{{ setting.name }}</label>
+            <label>{{ setting.setting_key }}</label>
             <p class="setting-description">{{ setting.description }}</p>
           </div>
           <div class="setting-control">
-            <!-- Text Input -->
+            <!-- Assuming all settings are text inputs for now based on the API schema -->
             <input 
-              *ngIf="setting.type === 'text'" 
               type="text" 
-              [(ngModel)]="setting.value"
-              [placeholder]="setting.name">
-            
-            <!-- Number Input -->
-            <input 
-              *ngIf="setting.type === 'number'" 
-              type="number" 
-              [(ngModel)]="setting.value"
-              [placeholder]="setting.name">
-            
-            <!-- Boolean Checkbox -->
-            <label class="checkbox-container" *ngIf="setting.type === 'boolean'">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="setting.value">
-              <span class="checkmark"></span>
-            </label>
-            
-            <!-- Select Dropdown -->
-            <select 
-              *ngIf="setting.type === 'select'" 
-              [(ngModel)]="setting.value">
-              <option *ngFor="let option of setting.options" [value]="option">{{ option }}</option>
-            </select>
+              [(ngModel)]="setting.setting_value"
+              [placeholder]="setting.setting_key">
           </div>
         </div>
       </div>

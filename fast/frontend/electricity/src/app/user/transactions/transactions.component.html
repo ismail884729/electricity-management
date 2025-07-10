@@ -3,7 +3,7 @@
     <h2>Your Transactions</h2>
     <div class="transaction-actions">
       <div class="search-bar">
-        <input type="text" placeholder="Search by ID, date, or amount..." [(ngModel)]="searchText" (keyup)="filterTransactions()">
+        <input type="text" placeholder="Search by ID, reference, or amount..." [(ngModel)]="searchText" (keyup)="filterTransactions()">
       </div>
       <div class="filters">
         <button [class.active]="statusFilter === 'all'" (click)="setStatusFilter('all')">All</button>
@@ -11,6 +11,9 @@
         <button [class.active]="statusFilter === 'Pending'" (click)="setStatusFilter('Pending')">Pending</button>
         <button [class.active]="statusFilter === 'Failed'" (click)="setStatusFilter('Failed')">Failed</button>
       </div>
+      <button class="refresh-btn" (click)="refreshTransactions()" [disabled]="isLoading">
+        <span class="icon">🔄</span> Refresh
+      </button>
     </div>
   </div>
 
@@ -28,71 +31,60 @@
       <div class="transactions-body">
         <div *ngFor="let transaction of filteredTransactions" 
              class="transaction-row" 
-             [class.selected]="selectedTransaction && transaction.id === selectedTransaction.id"
              (click)="selectTransaction(transaction)">
           <div class="td-id">{{ transaction.id }}</div>
-          <div class="td-date">{{ transaction.date }}</div>
-          <div class="td-amount">{{ transaction.amount }}</div>
-          <div class="td-units">{{ transaction.units }}</div>
+          <div class="td-date">{{ transaction.created_at | date: 'short' }}</div>
+          <div class="td-amount">{{ transaction.amount | currency:'TSh':'symbol':'1.2-2' }}</div>
+          <div class="td-units">{{ transaction.units_purchased }} kWh</div>
           <div class="td-status" [ngClass]="{
             'status-completed': transaction.status === 'Completed',
             'status-pending': transaction.status === 'Pending',
             'status-failed': transaction.status === 'Failed'
-          }">{{ transaction.status }}</div>
+          }">
+            <span class="status-icon" [innerHTML]="getStatusIcon(transaction.status)"></span>
+            {{ transaction.status }}
+          </div>
           <div class="td-actions">
-            <button class="view-receipt" (click)="selectTransaction(transaction)">View Details</button>
+            <button class="view-details-btn" (click)="selectTransaction(transaction); $event.stopPropagation()">
+              <span class="icon">👁️</span> View Details
+            </button>
+            <button class="download-btn" (click)="downloadReceipt(transaction); $event.stopPropagation()">
+              <span class="icon">📄</span> Receipt
+            </button>
           </div>
         </div>
         
-        <div *ngIf="filteredTransactions.length === 0" class="no-transactions">
-          <p>No transactions found.</p>
+        <div *ngIf="!isLoading && filteredTransactions.length === 0" class="no-transactions">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <h3>No transactions found</h3>
+            <p>{{ searchText || statusFilter !== 'all' ? 'Try adjusting your search or filter criteria.' : 'You haven\'t made any transactions yet.' }}</p>
+            <button class="refresh-btn" (click)="refreshTransactions()">
+              <span class="icon">🔄</span> Refresh
+            </button>
+          </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Transaction Details -->
-    <div class="transaction-details" *ngIf="selectedTransaction">
-      <div class="details-header">
-        <h3>Transaction Details</h3>
-        <div class="details-id">{{ selectedTransaction.id }}</div>
-      </div>
-
-      <div class="details-body">
-        <div class="detail-row">
-          <div class="detail-label">Transaction Date</div>
-          <div class="detail-value">{{ selectedTransaction.date }}</div>
-        </div>
-        <div class="detail-row">
-          <div class="detail-label">Amount Paid</div>
-          <div class="detail-value">{{ selectedTransaction.amount }}</div>
-        </div>
-        <div class="detail-row">
-          <div class="detail-label">Units Purchased</div>
-          <div class="detail-value">{{ selectedTransaction.units }}</div>
-        </div>
-        <div class="detail-row">
-          <div class="detail-label">Payment Method</div>
-          <div class="detail-value">{{ selectedTransaction.paymentMethod }}</div>
-        </div>
-        <div class="detail-row">
-          <div class="detail-label">Status</div>
-          <div class="detail-value status" [ngClass]="{
-            'status-completed': selectedTransaction.status === 'Completed',
-            'status-pending': selectedTransaction.status === 'Pending',
-            'status-failed': selectedTransaction.status === 'Failed'
-          }">{{ selectedTransaction.status }}</div>
-        </div>
-        <div class="detail-row">
-          <div class="detail-label">Receipt Number</div>
-          <div class="detail-value">{{ selectedTransaction.receiptNo }}</div>
-        </div>
-      </div>
-
-      <div class="details-actions">
-        <button class="download-receipt" (click)="downloadReceipt(selectedTransaction.receiptNo)">
-          <span class="icon">⬇️</span> Download Receipt
-        </button>
-      </div>
+  <!-- Transaction summary stats -->
+  <div class="transaction-stats" *ngIf="!isLoading && transactions.length > 0">
+    <div class="stat-card">
+      <div class="stat-number">{{ transactions.length }}</div>
+      <div class="stat-label">Total Transactions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ getCompletedCount() }}</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ getPendingCount() }}</div>
+      <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">TSh {{ getTotalAmount() | currency:'TSh':'symbol':'1.2-2' }}</div>
+      <div class="stat-label">Total Amount</div>
     </div>
   </div>
 </div>

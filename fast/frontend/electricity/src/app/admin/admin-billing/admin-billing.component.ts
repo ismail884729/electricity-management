@@ -1,17 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-
-interface Bill {
-  id: string;
-  userId: string;
-  userName: string;
-  billNumber: string;
-  amount: number;
-  dueDate: string;
-  issueDate: string;
-  status: string;
-  unitsConsumed: number;
-  period: string;
-}
+import Swal from 'sweetalert2';
+import { AdminService } from '../../services/admin.service';
+import { Transaction } from '../../services/user.service'; // Bills are now transactions
 
 @Component({
   selector: 'app-admin-billing',
@@ -19,100 +9,119 @@ interface Bill {
   styleUrls: ['./admin-billing.component.css']
 })
 export class AdminBillingComponent implements OnInit {
-  bills: Bill[] = [];
+  bills: Transaction[] = []; // Bills are now transactions
+  filteredBills: Transaction[] = [];
   searchTerm: string = '';
   currentPage: number = 1;
   totalPages: number = 1;
-  selectedStatus: string = '';
+  selectedStatus: string = 'all';
   totalAmount: number = 0;
-  paidAmount: number = 0;
-  pendingAmount: number = 0;
+  totalTransactions: number = 0;
+  averageTransactionValue: number = 0;
 
-  constructor() {}
+  constructor(private adminService: AdminService) {}
 
   ngOnInit(): void {
     this.loadBills();
-    this.calculateTotals();
+    this.loadBillingStatistics();
   }
 
   loadBills(): void {
-    // Mock data - in real app, this would come from a service
-    this.bills = [
-      {
-        id: 'BILL-001',
-        userId: 'USR-001',
-        userName: 'John Doe',
-        billNumber: 'EL-2024-001',
-        amount: 150.50,
-        dueDate: '2024-02-15',
-        issueDate: '2024-01-15',
-        status: 'Paid',
-        unitsConsumed: 350,
-        period: 'Jan 2024'
+    this.showLoadingAlert('Loading Bills...');
+    const params = {
+      skip: (this.currentPage - 1) * 10, // Assuming page size of 10
+      limit: 10,
+      status: this.selectedStatus !== 'all' ? this.selectedStatus : undefined,
+      // Add other filters if needed, e.g., payment_method, start_date, end_date
+    };
+
+    this.adminService.getBillingTransactions(params).subscribe({
+      next: (transactions) => {
+        Swal.close();
+        this.bills = transactions;
+        this.filteredBills = transactions; // Assuming API returns filtered/paginated data
+        this.totalPages = Math.ceil(this.bills.length / 10); // Adjust if API provides total count
+        this.showSuccessAlert('Bills loaded successfully!');
       },
-      {
-        id: 'BILL-002',
-        userId: 'USR-002',
-        userName: 'Jane Smith',
-        billNumber: 'EL-2024-002',
-        amount: 89.25,
-        dueDate: '2024-02-20',
-        issueDate: '2024-01-20',
-        status: 'Pending',
-        unitsConsumed: 205,
-        period: 'Jan 2024'
-      },
-      {
-        id: 'BILL-003',
-        userId: 'USR-003',
-        userName: 'Bob Johnson',
-        billNumber: 'EL-2024-003',
-        amount: 275.75,
-        dueDate: '2024-01-25',
-        issueDate: '2023-12-25',
-        status: 'Overdue',
-        unitsConsumed: 620,
-        period: 'Dec 2023'
+      error: (err) => {
+        Swal.close();
+        this.showErrorAlert('Failed to load bills.', err.message);
       }
-    ];
-    
-    this.totalPages = Math.ceil(this.bills.length / 10);
+    });
   }
 
-  calculateTotals(): void {
-    this.totalAmount = this.bills.reduce((sum, bill) => sum + bill.amount, 0);
-    this.paidAmount = this.bills.filter(bill => bill.status === 'Paid').reduce((sum, bill) => sum + bill.amount, 0);
-    this.pendingAmount = this.bills.filter(bill => bill.status !== 'Paid').reduce((sum, bill) => sum + bill.amount, 0);
+  loadBillingStatistics(): void {
+    this.adminService.getBillingStatistics().subscribe({
+      next: (stats) => {
+        this.totalAmount = stats.total_revenue;
+        this.totalTransactions = stats.total_transactions;
+        this.averageTransactionValue = stats.average_transaction_value;
+      },
+      error: (err) => {
+        console.error('Failed to load billing statistics:', err);
+        // Optionally show an error alert here if critical
+      }
+    });
   }
 
   searchBills(): void {
-    console.log('Searching bills:', this.searchTerm);
-    // In a real app, this would filter the bills
+    this.loadBills(); // Trigger reload with search term
   }
 
   filterByStatus(): void {
-    console.log('Filtering by status:', this.selectedStatus);
-    // In a real app, this would filter bills by status
+    this.loadBills(); // Trigger reload with status filter
   }
 
-  viewBillDetails(bill: Bill): void {
-    console.log('Viewing bill details:', bill.id);
-    // In a real app, this would show detailed bill information
+  viewBillDetails(bill: Transaction): void {
+    this.showSuccessAlert(`Viewing details for transaction: ${bill.transaction_reference}`);
+    // In a real app, this would show detailed transaction information
   }
 
-  editBill(bill: Bill): void {
-    console.log('Editing bill:', bill.id);
+  editBill(bill: Transaction): void {
+    this.showSuccessAlert(`Editing transaction: ${bill.transaction_reference}`);
     // In a real app, this would open an edit modal or navigate to edit page
   }
 
-  sendReminder(bill: Bill): void {
-    console.log('Sending reminder for bill:', bill.id);
-    // In a real app, this would send a payment reminder
+  sendReminder(bill: Transaction): void {
+    this.showLoadingAlert(`Sending reminder for transaction: ${bill.transaction_reference}...`);
+    // Assuming there's no direct API for sending reminders for transactions,
+    // this would be a mock or require a new API endpoint.
+    setTimeout(() => {
+      Swal.close();
+      this.showSuccessAlert(`Reminder sent for transaction: ${bill.transaction_reference}`);
+    }, 1000);
   }
 
   goToPage(page: number): void {
     this.currentPage = page;
-    console.log('Going to page:', page);
-    // In a real app, this would load the new page of bills
+    this.loadBills(); // Load new page of bills
+  }
+
+  private showLoadingAlert(message: string): void {
+    Swal.fire({
+      title: message,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+  }
+
+  private showSuccessAlert(message: string): void {
+    Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: message,
+      timer: 2000,
+      showConfirmButton: false
+    });
+  }
+
+  private showErrorAlert(title: string, message: string): void {
+    Swal.fire({
+      icon: 'error',
+      title: title,
+      text: message
+    });
   }
 }

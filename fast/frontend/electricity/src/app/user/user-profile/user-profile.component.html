@@ -1,13 +1,16 @@
 <div class="profile-container" *ngIf="currentUser">
   <div class="section-header">
     <h2>My Profile</h2>
-    <button *ngIf="!editMode" (click)="toggleEditMode()" class="edit-button">Edit Profile</button>
-    <div *ngIf="editMode" class="edit-actions">
-      <button (click)="saveProfile()" class="save-button" [disabled]="isSaving || profileForm.invalid">
-        <span *ngIf="isSaving">Saving...</span>
-        <span *ngIf="!isSaving">Save Changes</span>
-      </button>
-      <button (click)="toggleEditMode()" class="cancel-button" [disabled]="isSaving">Cancel</button>
+    <div>
+      <button (click)="loadUserProfile()" class="refresh-button" [disabled]="isSaving">Refresh Profile</button>
+      <button *ngIf="!editMode" (click)="toggleEditMode()" class="edit-button">Edit Profile</button>
+      <div *ngIf="editMode" class="edit-actions">
+        <button (click)="saveProfile()" class="save-button" [disabled]="isSaving || profileForm.invalid">
+          <span *ngIf="isSaving">Saving...</span>
+          <span *ngIf="!isSaving">Save Changes</span>
+        </button>
+        <button (click)="toggleEditMode()" class="cancel-button" [disabled]="isSaving">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -89,7 +92,16 @@
         <div class="detail-row">
           <span class="detail-label">My Devices:</span>
           <span class="detail-value">
-            <a routerLink="/user/device-details" class="view-devices-link">View My Devices</a>
+            <ng-container *ngIf="userDevices.length > 0; else noDevices">
+              <ul class="device-list">
+                <li *ngFor="let device of userDevices">
+                  <strong>{{ device.device_name }} ({{ device.device_id }}):</strong> {{ formatUnits(device.unit_balance) }}
+                </li>
+              </ul>
+            </ng-container>
+            <ng-template #noDevices>
+              No devices found.
+            </ng-template>
           </span>
         </div>
       </div>

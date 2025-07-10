@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService, User } from '../../services/auth.service';
+import { Device, Transaction, UserService } from '../../services/user.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-user-dashboard',
@@ -13,15 +15,14 @@ export class UserDashboardComponent implements OnInit {
   isRootRoute: boolean = true;
   currentUser: User | null = null;
   lastPaymentDate: string = 'July 3, 2025'; // Default value
-  currentUsage: number = 245; // Default value in kWh
-  estimatedDaysRemaining: number = 5; // Default value
-  // Average electricity cost per kWh in TSh
-  averageKWhCost: number = 100; // Estimated cost per kWh
+  userDevices: Device[] = [];
+  recentTransactions: Transaction[] = [];
 
   constructor(
-    private router: Router, 
+    private router: Router,
     private activatedRoute: ActivatedRoute,
-    private authService: AuthService
+    private authService: AuthService,
+    private userService: UserService
   ) {}
 
   ngOnInit() {
@@ -31,13 +32,9 @@ export class UserDashboardComponent implements OnInit {
     // Subscribe to changes in the current user
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      
-      // If we have user data, calculate estimated days remaining based on money balance
-      if (user && user.unit_balance) {
-        // Assuming average daily consumption of 30 kWh at the cost of averageKWhCost TSh per kWh
-        const averageDailyConsumption = 30; // kWh per day
-        const averageDailyCost = averageDailyConsumption * this.averageKWhCost; // TSh per day
-        this.estimatedDaysRemaining = Math.floor(user.unit_balance / averageDailyCost);
+      if (user) { // Add null check for user
+        this.loadUserDevices(user.id);
+        this.loadRecentTransactions(user.id); // Load recent transactions
       }
     });
     
@@ -50,6 +47,18 @@ export class UserDashboardComponent implements OnInit {
 
     // Set initial active page and route state
     this.updateActivePage();
+
+    // Explicitly fetch current user on dashboard load to ensure latest balance
+    this.authService.fetchCurrentUser().subscribe({
+      next: (user) => {
+        console.log('Dashboard initialized with latest user data:', user.unit_balance);
+        this.loadUserDevices(user.id); // Also load devices on initial fetch
+        this.loadRecentTransactions(user.id); // Also load recent transactions on initial fetch
+      },
+      error: (err) => {
+        console.error('Error fetching user data on dashboard init:', err);
+      }
+    });
   }
 
   updateActivePage() {
@@ -90,9 +99,88 @@ export class UserDashboardComponent implements OnInit {
     return 'User';
   }
   
-  // Helper method to format currency in TSh
-  formatCurrency(amount: number | undefined): string {
-    if (amount === undefined) return 'TSh 0';
-    return 'TSh ' + amount.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  // Helper method to format currency
+  formatCurrency(amount: number | undefined, currencySymbol: string = 'TSh'): string {
+    if (amount === undefined) return `${currencySymbol} 0`;
+    return `${currencySymbol} ` + amount.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+
+  // Helper method to format units in kWh
+  formatUnits(units: number | undefined): string {
+    if (units === undefined) return '0 kWh';
+    return units.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' kWh';
+  }
+
+  loadUserDevices(userId: number): void {
+    this.userService.getUserDevices(userId).subscribe({
+      next: (devices) => {
+        this.userDevices = devices;
+      },
+      error: (error) => {
+        console.error('Error loading user devices:', error);
+      }
+    });
+  }
+
+  loadRecentTransactions(userId: number): void {
+    this.userService.getUserTransactions(userId, 0, 5).subscribe({ // Fetch top 5 transactions
+      next: (transactions) => {
+        this.recentTransactions = transactions;
+      },
+      error: (error) => {
+        console.error('Error loading recent transactions:', error);
+      }
+    });
+  }
+
+  getStatusBadge(status: string): string {
+    const badges = {
+      'Completed': '<span class="status success">✅ Completed</span>',
+      'Pending': '<span class="status pending">⏳ Pending</span>',
+      'Failed': '<span class="status failed">❌ Failed</span>'
+    };
+    return badges[status as keyof typeof badges] || `<span class="status">${status}</span>`;
+  }
+
+  getStatusIcon(status: string): string {
+    const icons: { [key: string]: string } = {
+      'Completed': '✅',
+      'Pending': '⏳',
+      'Failed': '❌'
+    };
+    return icons[status] || '⚪';
+  }
+
+  refreshBalance() {
+    Swal.fire({
+      title: 'Refreshing Balance...',
+      text: 'Please wait while we fetch your latest account balance.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    this.userService.getMe().subscribe({ // Changed to getMe()
+      next: (user: User) => { // Explicitly type user as User
+        this.currentUser = user;
+        this.authService.setCurrentUser(user);
+        Swal.fire({
+          title: 'Balance Refreshed!',
+          text: `Your new balance is ${this.formatCurrency(user.unit_balance)}.`,
+          icon: 'success',
+          confirmButtonColor: '#00897b'
+        });
+      },
+      error: (error: any) => { // Explicitly type error as any
+        console.error('Error refreshing balance:', error);
+        Swal.fire({
+          title: 'Error',
+          text: 'Unable to refresh your balance. Please try again later.',
+          icon: 'error',
+          confirmButtonColor: '#d33'
+        });
+      }
+    });
   }
 }

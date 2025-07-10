@@ -17,25 +17,25 @@
             <label for="meterSelect">Select Meter</label>
             <select id="meterSelect" [(ngModel)]="selectedMeter">
               <option value="" disabled selected>Choose a meter</option>
-              <option *ngFor="let meter of meters" [value]="meter.id">
-                {{ meter.id }} ({{ meter.location }})
+              <option *ngFor="let meter of meters" [value]="meter.device_id">
+                {{ meter.device_id }} ({{ meter.device_name }})
               </option>
             </select>
           </div>
           
           <div class="rate-info" *ngIf="currentRate">
             <div class="rate-name">Current Rate: {{ currentRate.rate_name }}</div>
-            <div class="rate-price">Price per Unit: TSh {{ currentRate.price_per_unit.toLocaleString() }}</div>
+            <div class="rate-price">Price per Unit: TSh {{ currentRate.price_per_unit | currency:'TSh':'symbol':'1.2-2' }}</div>
             <div class="rate-date">Effective since: {{ currentRate.effective_date | date:'mediumDate' }}</div>
           </div>
           
           <div class="form-group">
             <label for="amountInput">Amount (TSh)</label>
-            <input 
-              type="number" 
-              id="amountInput" 
-              [(ngModel)]="amount" 
-              min="1" 
+            <input
+              type="number"
+              id="amountInput"
+              [(ngModel)]="amount"
+              min="1"
               (input)="calculateUnits()"
               placeholder="Enter amount">
           </div>
@@ -49,15 +49,14 @@
             </div>
           </div>
           
-          <div class="form-group payment-methods">
+            <div class="form-group payment-methods">
             <label>Payment Method</label>
             <div class="payment-options">
               <div 
                 *ngFor="let method of paymentMethods" 
                 class="payment-option" 
-                [class.selected]="paymentMethod === method.id"
-                (click)="paymentMethod = method.id">
-                <div class="payment-icon" [ngClass]="method.id"></div>
+                [class.selected]="paymentMethod === method.id">
+                <div class="payment-icon" [ngClass]="'direct'"></div>
                 <div class="payment-name">{{ method.name }}</div>
               </div>
             </div>
@@ -116,10 +115,10 @@
         <div class="detail-label">Transaction ID</div>
         <div class="detail-value">{{ transactionId }}</div>
       </div>
-      <div class="detail-item">
-        <div class="detail-label">Amount</div>
-        <div class="detail-value">${{ amount }}</div>
-      </div>
+        <div class="detail-item">
+          <div class="detail-label">Amount</div>
+          <div class="detail-value">TSh {{ amount | currency:'TSh':'symbol':'1.2-2' }}</div>
+        </div>
       <div class="detail-item">
         <div class="detail-label">Units Purchased</div>
         <div class="detail-value">{{ units }} kWh</div>

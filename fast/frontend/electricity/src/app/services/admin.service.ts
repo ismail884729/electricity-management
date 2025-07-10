@@ -5,12 +5,21 @@ import { environment } from '../../environments/environment';
 import { User } from './auth.service';
 import { Device, Transaction } from './user.service';
 
+export interface Setting {
+  setting_key: string;
+  setting_value: string;
+  description: string;
+  id: number;
+  updated_by: number;
+  updated_at: string;
+}
+
 export interface RatePlan {
   id: number;
-  name: string;
+  rate_name: string;
   price_per_unit: number;
-  description: string;
   is_active: boolean;
+  effective_date: string;
   created_at: string;
   updated_at: string;
 }
@@ -38,8 +47,8 @@ export class AdminService {
   }
 
   // User management
-  getAllUsers(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/users`);
+  getAllUsers(params: { skip?: number; limit?: number; is_active?: boolean; role?: string } = {}): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/users`, { params });
   }
 
   getUserById(userId: number): Observable<User> {
@@ -54,6 +63,10 @@ export class AdminService {
     return this.http.put<User>(`${this.apiUrl}/users/${userId}`, userData);
   }
 
+  deleteUser(userId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/users/${userId}`);
+  }
+
   setAdminRole(userId: number): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/users/${userId}/set_admin_role`, {});
   }
@@ -64,6 +77,27 @@ export class AdminService {
 
   activateUser(userId: number): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/users/${userId}/activate`, {});
+  }
+
+  // Settings management
+  getAllSettings(params: { skip?: number; limit?: number } = {}): Observable<Setting[]> {
+    return this.http.get<Setting[]>(`${this.apiUrl}/settings`, { params });
+  }
+
+  getSettingByKey(settingKey: string): Observable<Setting> {
+    return this.http.get<Setting>(`${this.apiUrl}/settings/${settingKey}`);
+  }
+
+  createSetting(settingData: Partial<Setting>): Observable<Setting> {
+    return this.http.post<Setting>(`${this.apiUrl}/settings`, settingData);
+  }
+
+  updateSetting(settingKey: string, settingData: Partial<Setting>): Observable<Setting> {
+    return this.http.put<Setting>(`${this.apiUrl}/settings/${settingKey}`, settingData);
+  }
+
+  deleteSetting(settingKey: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/settings/${settingKey}`);
   }
 
   // Device management
@@ -83,42 +117,60 @@ export class AdminService {
     return this.http.put<Device>(`${this.apiUrl}/devices/${deviceId}`, deviceData);
   }
 
+  // Simplified public endpoints (assuming they are still managed by admin service for now)
+  createDevicePublic(deviceData: Partial<Device>): Observable<Device> {
+    return this.http.post<Device>(`${environment.apiUrl}/create-device`, deviceData);
+  }
+
+  addRateJsonPublic(rateData: Partial<RatePlan>): Observable<RatePlan> {
+    return this.http.post<RatePlan>(`${environment.apiUrl}/add-rate-json`, rateData);
+  }
+
+  // Billing management
+  getBillingTransactions(params: { skip?: number; limit?: number; status?: string; payment_method?: string; start_date?: string; end_date?: string } = {}): Observable<Transaction[]> {
+    return this.http.get<Transaction[]>(`${this.apiUrl}/billing`, { params });
+  }
+
+  getBillingStatistics(): Observable<{ total_revenue: number; total_transactions: number; average_transaction_value: number }> {
+    return this.http.get<{ total_revenue: number; total_transactions: number; average_transaction_value: number }>(`${this.apiUrl}/billing/statistics`);
+  }
+
   // Transactions management
-  getAllTransactions(): Observable<Transaction[]> {
-    return this.http.get<Transaction[]>(`${this.apiUrl}/transactions`);
+  getAllTransactions(params: { skip?: number; limit?: number; status?: string; payment_method?: string; start_date?: string; end_date?: string } = {}): Observable<Transaction[]> {
+    return this.http.get<Transaction[]>(`${this.apiUrl}/transactions`, { params });
   }
 
-  getTransactionById(transactionId: number): Observable<Transaction> {
-    return this.http.get<Transaction>(`${this.apiUrl}/transactions/${transactionId}`);
+  getTransactionsSummary(params: { start_date?: string; end_date?: string } = {}): Observable<any> {
+    return this.http.get(`${this.apiUrl}/transactions/summary`, { params });
   }
 
-  updateTransactionStatus(transactionId: number, status: string): Observable<Transaction> {
-    return this.http.put<Transaction>(`${this.apiUrl}/transactions/${transactionId}`, { status });
+  exportTransactionsCsv(params: { status?: string; payment_method?: string; start_date?: string; end_date?: string } = {}): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/transactions/export`, { params, responseType: 'blob' });
   }
 
   // Rate plans management
-  getAllRatePlans(): Observable<RatePlan[]> {
-    return this.http.get<RatePlan[]>(`${this.apiUrl}/rate-plans`);
+  getAllRatePlans(params: { skip?: number; limit?: number } = {}): Observable<RatePlan[]> {
+    return this.http.get<RatePlan[]>(`${this.apiUrl}/rates`, { params });
   }
 
-  getRatePlanById(planId: number): Observable<RatePlan> {
-    return this.http.get<RatePlan>(`${this.apiUrl}/rate-plans/${planId}`);
+  getRatePlanById(rateId: number): Observable<RatePlan> {
+    return this.http.get<RatePlan>(`${this.apiUrl}/rates/${rateId}`);
   }
 
   createRatePlan(planData: Partial<RatePlan>): Observable<RatePlan> {
-    return this.http.post<RatePlan>(`${this.apiUrl}/rate-plans`, planData);
+    return this.http.post<RatePlan>(`${this.apiUrl}/rates`, planData);
   }
 
-  updateRatePlan(planId: number, planData: Partial<RatePlan>): Observable<RatePlan> {
-    return this.http.put<RatePlan>(`${this.apiUrl}/rate-plans/${planId}`, planData);
+  updateRatePlan(rateId: number, planData: Partial<RatePlan>): Observable<RatePlan> {
+    return this.http.put<RatePlan>(`${this.apiUrl}/rates/${rateId}`, planData);
   }
 
-  activateRatePlan(planId: number): Observable<RatePlan> {
-    return this.http.post<RatePlan>(`${this.apiUrl}/rate-plans/${planId}/activate`, {});
+  deleteRatePlan(rateId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/rates/${rateId}`);
   }
 
-  deactivateRatePlan(planId: number): Observable<RatePlan> {
-    return this.http.post<RatePlan>(`${this.apiUrl}/rate-plans/${planId}/deactivate`, {});
+  activateRatePlan(rateId: number): Observable<RatePlan> {
+    return this.http.patch<RatePlan>(`${this.apiUrl}/rates/${rateId}/activate`, {});
   }
 
   // Reports and analytics

@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { AuthService, User } from '../../services/auth.service';
-import { UserService } from '../../services/user.service';
+import { Device, UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-user-profile',
@@ -20,6 +20,7 @@ export class UserProfileComponent implements OnInit {
   saveSuccess = false;
   saveError = '';
   accountBalance = 0;
+  userDevices: Device[] = [];
   
   // Change password related properties
   showPasswordModal = false;
@@ -35,7 +36,7 @@ export class UserProfileComponent implements OnInit {
 
   ngOnInit(): void {
     // Get the current user data
-    this.currentUser = this.authService.getCurrentUser();
+    this.loadUserProfile(); // Load profile on init
     
     // Initialize the forms with the current user data
     this.initializeForm();
@@ -47,6 +48,23 @@ export class UserProfileComponent implements OnInit {
         this.currentUser = user;
         this.initializeForm();
         this.accountBalance = user.unit_balance;
+        this.loadUserDevices(user.id); // Load devices when user data is available
+      }
+    });
+  }
+
+  loadUserProfile(): void {
+    this.userService.getMe().subscribe({
+      next: (user: User) => {
+        this.currentUser = user;
+        this.authService.setCurrentUser(user); // Ensure AuthService has the latest user data
+        this.accountBalance = user.unit_balance;
+        this.initializeForm(); // Re-initialize form with fetched data
+        this.loadUserDevices(user.id); // Load devices when user profile is loaded
+      },
+      error: (error: any) => {
+        console.error('Error loading user profile:', error);
+        // Handle error, e.g., show a message
       }
     });
   }
@@ -105,32 +123,32 @@ export class UserProfileComponent implements OnInit {
     this.saveSuccess = false;
     this.saveError = '';
 
-    // In a real app, you would call the user service to update the profile
-    // For now we'll just simulate a successful update
-    setTimeout(() => {
-      if (this.currentUser) {
-        const updatedUser = {
-          ...this.currentUser,
-          ...this.profileForm.value
-        };
-        
-        // Update local storage and the current user
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        // Update the auth service's currentUser BehaviorSubject
-        this.authService['currentUserSubject'].next(updatedUser);
-        
-        this.isSaving = false;
-        this.toggleEditMode();
-        
-        // Show success message with SweetAlert
-        Swal.fire({
-          title: 'Success!',
-          text: 'Your profile has been updated successfully',
-          icon: 'success',
-          confirmButtonColor: '#00897b'
-        });
-      }
-    }, 1000);
+    this.userService.updateUserProfile(this.profileForm.value)
+      .pipe(
+        finalize(() => this.isSaving = false)
+      )
+      .subscribe({
+        next: (updatedUser: User) => {
+          this.authService.setCurrentUser(updatedUser); // Update the user in AuthService
+          this.toggleEditMode();
+          Swal.fire({
+            title: 'Success!',
+            text: 'Your profile has been updated successfully',
+            icon: 'success',
+            confirmButtonColor: '#00897b'
+          });
+        },
+        error: (error: any) => {
+          console.error('Error saving profile:', error);
+          this.saveError = error.error?.detail || 'Failed to update profile. Please try again.';
+          Swal.fire({
+            title: 'Error!',
+            text: this.saveError,
+            icon: 'error',
+            confirmButtonColor: '#d33'
+          });
+        }
+      });
   }
 
   // Helper method to format date
@@ -148,6 +166,24 @@ export class UserProfileComponent implements OnInit {
   formatCurrency(amount: number | undefined): string {
     if (amount === undefined) return 'TSh 0';
     return 'TSh ' + amount.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+
+  // Helper method to format units in kWh
+  formatUnits(units: number | undefined): string {
+    if (units === undefined) return '0 kWh';
+    return units.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' kWh';
+  }
+
+  loadUserDevices(userId: number): void {
+    this.userService.getUserDevices(userId).subscribe({
+      next: (devices) => {
+        this.userDevices = devices;
+      },
+      error: (error) => {
+        console.error('Error loading user devices:', error);
+        // Handle error, e.g., show a message
+      }
+    });
   }
 
   // Password change methods
@@ -235,7 +271,7 @@ export class UserProfileComponent implements OnInit {
           
           this.resetPasswordForm();
         },
-        error: (error) => {
+        error: (error: any) => { // Explicitly type error
           console.error('Password change failed:', error);
           
           // Show error message with SweetAlert

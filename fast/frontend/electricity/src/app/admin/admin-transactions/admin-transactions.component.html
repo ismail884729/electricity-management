@@ -3,22 +3,31 @@
     <h1>Transaction History</h1>
     <p>View and manage all electricity purchase transactions</p>
   </div>
-  
+
   <!-- Search and Filter Section -->
   <div class="transactions-controls">
     <div class="search-controls">
       <div class="search-box">
-        <input 
-          type="text" 
-          placeholder="Search by transaction ID, user, or amount..." 
+        <input
+          type="text"
+          placeholder="Search by transaction or device ID..."
           [(ngModel)]="searchTerm"
           (keyup.enter)="searchTransactions()">
         <button class="search-btn" (click)="searchTransactions()">
           <i class="fas fa-search"></i>
         </button>
       </div>
+      <button class="btn btn-secondary" (click)="displayTransactionsSummary()">
+        <i class="fas fa-chart-bar"></i> Get Summary
+      </button>
+      <button class="btn btn-secondary" (click)="exportTransactions()">
+        <i class="fas fa-file-csv"></i> Export CSV
+      </button>
+      <button class="btn btn-secondary" (click)="generateTransactionsPdf()">
+        <i class="fas fa-file-pdf"></i> Generate PDF Summary
+      </button>
     </div>
-    
+
     <div class="filter-controls">
       <div class="filter-group">
         <label>Status:</label>
@@ -27,50 +36,40 @@
           <option value="completed">Completed</option>
           <option value="pending">Pending</option>
           <option value="failed">Failed</option>
-          <option value="refunded">Refunded</option>
         </select>
       </div>
-      
+
       <div class="filter-group">
         <label>Date Range:</label>
-        <input 
-          type="date" 
-          [(ngModel)]="startDate" 
+        <input
+          type="date"
+          [(ngModel)]="startDate"
           (change)="filterTransactions()"
           class="date-input">
         <span>to</span>
-        <input 
-          type="date" 
-          [(ngModel)]="endDate" 
+        <input
+          type="date"
+          [(ngModel)]="endDate"
           (change)="filterTransactions()"
           class="date-input">
       </div>
-      
-      <div class="filter-group">
-        <label>Min Amount:</label>
-        <input 
-          type="number" 
-          [(ngModel)]="minAmount" 
-          (change)="filterTransactions()"
-          placeholder="$"
-          min="0"
-          class="amount-input">
-      </div>
-      
+
       <div class="filter-group">
         <label>Payment Method:</label>
         <select [(ngModel)]="paymentMethodFilter" (change)="filterTransactions()">
           <option value="all">All Methods</option>
-          <option value="direct">Direct Transfer</option>
+          <option value="card">Card</option>
+          <option value="mpesa">M-Pesa</option>
+          <option value="direct_transfer">Direct Transfer</option>
         </select>
       </div>
-      
+
       <button class="reset-btn" (click)="resetFilters()">
         Reset Filters
       </button>
     </div>
   </div>
-  
+
   <!-- Transactions Table -->
   <div class="transactions-table-container">
     <table class="transactions-table">
@@ -78,22 +77,22 @@
         <tr>
           <th>Transaction ID</th>
           <th>Date & Time</th>
-          <th>User</th>
+          <th>Device ID</th>
           <th>Amount</th>
-          <th>kWh</th>
+          <th>Units Purchased</th>
           <th>Payment Method</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let transaction of filteredTransactions">
-          <td>{{ transaction.id }}</td>
-          <td>{{ transaction.timestamp }}</td>
-          <td>{{ transaction.user }}</td>
-          <td>{{ transaction.amount | currency:'USD':'symbol':'1.2-2' }}</td>
-          <td>{{ transaction.kwhPurchased }}</td>
-          <td>{{ transaction.paymentMethod }}</td>
+        <tr *ngFor="let transaction of filteredTransactions | slice: (currentPage - 1) * pageSize : currentPage * pageSize">
+          <td>{{ transaction.transaction_reference }}</td>
+          <td>{{ transaction.created_at | date:'short' }}</td>
+          <td>{{ transaction.device_id }}</td>
+          <td>{{ transaction.amount | currency:'TSh':'symbol':'1.2-2' }}</td>
+          <td>{{ transaction.units_purchased }}</td>
+          <td>{{ transaction.payment_method }}</td>
           <td>
             <span class="status-badge" [ngClass]="transaction.status">
               {{ transaction.status }}
@@ -102,12 +101,6 @@
           <td class="actions-cell">
             <button class="action-btn view" (click)="viewTransactionDetails(transaction)">
               <i class="fas fa-eye"></i>
-            </button>
-            <button class="action-btn receipt" (click)="generateReceipt(transaction)">
-              <i class="fas fa-file-invoice"></i>
-            </button>
-            <button *ngIf="transaction.status === 'completed'" class="action-btn refund" (click)="initiateRefund(transaction)">
-              <i class="fas fa-undo"></i>
             </button>
           </td>
         </tr>
@@ -119,7 +112,7 @@
       </tbody>
     </table>
   </div>
-  
+
   <!-- Pagination -->
   <div class="pagination">
     <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
@@ -132,129 +125,31 @@
       Next <i class="fas fa-chevron-right"></i>
     </button>
   </div>
-  
+
   <!-- Transaction Details Modal -->
   <div class="modal" [class.visible]="showTransactionModal">
-    <div class="modal-content">
+    <div class="modal-content" *ngIf="selectedTransaction">
       <div class="modal-header">
-        <h2>{{ modalTitle }}</h2>
+        <h2>Transaction Details</h2>
         <button class="close-btn" (click)="closeModal()">×</button>
       </div>
-      <div class="modal-body" *ngIf="selectedTransaction">
-        <!-- Transaction Details View -->
+      <div class="modal-body">
         <div class="transaction-details">
-          <div class="detail-row">
-            <strong>Transaction ID:</strong> {{ selectedTransaction.id }}
-          </div>
-          <div class="detail-row">
-            <strong>Date & Time:</strong> {{ selectedTransaction.timestamp }}
-          </div>
-          <div class="detail-row">
-            <strong>User:</strong> {{ selectedTransaction.user }}
-          </div>
-          <div class="detail-row">
-            <strong>User ID:</strong> {{ selectedTransaction.userId }}
-          </div>
-          <div class="detail-row">
-            <strong>Amount:</strong> {{ selectedTransaction.amount | currency:'USD':'symbol':'1.2-2' }}
-          </div>
-          <div class="detail-row">
-            <strong>kWh Purchased:</strong> {{ selectedTransaction.kwhPurchased }}
-          </div>
-          <div class="detail-row">
-            <strong>Rate Plan:</strong> {{ selectedTransaction.ratePlan }}
-          </div>
-          <div class="detail-row">
-            <strong>Rate per kWh:</strong> {{ selectedTransaction.ratePerKwh | currency:'USD':'symbol':'1.4-4' }}
-          </div>
-          <div class="detail-row">
-            <strong>Payment Method:</strong> {{ selectedTransaction.paymentMethod }}
-          </div>
-          <div class="detail-row">
-            <strong>Payment ID:</strong> {{ selectedTransaction.paymentId }}
-          </div>
-          <div class="detail-row">
-            <strong>Status:</strong> 
-            <span class="status-badge" [ngClass]="selectedTransaction.status">
-              {{ selectedTransaction.status }}
-            </span>
-          </div>
-          <div class="detail-row">
-            <strong>Meter ID:</strong> {{ selectedTransaction.meterId }}
-          </div>
-          
-          <div *ngIf="selectedTransaction.notes" class="detail-row">
-            <strong>Notes:</strong> {{ selectedTransaction.notes }}
-          </div>
-          
-          <div *ngIf="selectedTransaction.refundDetails" class="refund-details">
-            <h3>Refund Information</h3>
-            <div class="detail-row">
-              <strong>Refund Date:</strong> {{ selectedTransaction.refundDetails.date }}
-            </div>
-            <div class="detail-row">
-              <strong>Refund Amount:</strong> {{ selectedTransaction.refundDetails.amount | currency:'USD':'symbol':'1.2-2' }}
-            </div>
-            <div class="detail-row">
-              <strong>Refund Reason:</strong> {{ selectedTransaction.refundDetails.reason }}
-            </div>
-            <div class="detail-row">
-              <strong>Processed By:</strong> {{ selectedTransaction.refundDetails.processedBy }}
-            </div>
-          </div>
-          
-          <div class="modal-actions">
-            <button class="btn secondary" (click)="closeModal()">Close</button>
-            <button class="btn primary" (click)="generateReceipt(selectedTransaction)">Generate Receipt</button>
-            <button *ngIf="selectedTransaction.status === 'completed'" 
-                    class="btn warning" 
-                    (click)="initiateRefund(selectedTransaction)">
-              Initiate Refund
-            </button>
-          </div>
+          <div class="detail-row"><strong>Transaction Reference:</strong> {{ selectedTransaction.transaction_reference }}</div>
+          <div class="detail-row"><strong>Date & Time:</strong> {{ selectedTransaction.created_at | date:'short' }}</div>
+          <div class="detail-row"><strong>Device ID:</strong> {{ selectedTransaction.device_id }}</div>
+          <div class="detail-row"><strong>Amount:</strong> {{ selectedTransaction.amount | currency:'TSh':'symbol':'1.2-2' }}</div>
+          <div class="detail-row"><strong>Units Purchased:</strong> {{ selectedTransaction.units_purchased }}</div>
+          <div class="detail-row"><strong>Payment Method:</strong> {{ selectedTransaction.payment_method }}</div>
+          <div class="detail-row"><strong>Status:</strong> <span class="status-badge" [ngClass]="selectedTransaction.status">{{ selectedTransaction.status }}</span></div>
+          <div class="detail-row"><strong>Balance Before:</strong> {{ selectedTransaction.balance_before | currency:'TSh':'symbol':'1.2-2' }}</div>
+          <div class="detail-row"><strong>Balance After:</strong> {{ selectedTransaction.balance_after | currency:'TSh':'symbol':'1.2-2' }}</div>
+          <div class="detail-row"><strong>Rate Name:</strong> {{ selectedTransaction.rate_name }}</div>
+          <div class="detail-row"><strong>Price Per Unit:</strong> {{ selectedTransaction.price_per_unit | currency:'TSh':'symbol':'1.4-4' }}</div>
+          <div class="detail-row" *ngIf="selectedTransaction.notes"><strong>Notes:</strong> {{ selectedTransaction.notes }}</div>
         </div>
-        
-        <!-- Refund Form -->
-        <div *ngIf="showRefundForm" class="refund-form">
-          <h3>Process Refund</h3>
-          <form (ngSubmit)="processRefund()">
-            <div class="form-group">
-              <label for="refundReason">Refund Reason</label>
-              <select id="refundReason" [(ngModel)]="refundReason" name="refundReason" required>
-                <option value="customer_request">Customer Request</option>
-                <option value="system_error">System Error</option>
-                <option value="billing_dispute">Billing Dispute</option>
-                <option value="service_issue">Service Issue</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label for="refundAmount">Refund Amount</label>
-              <input 
-                type="number" 
-                id="refundAmount" 
-                [(ngModel)]="refundAmount" 
-                name="refundAmount"
-                [max]="selectedTransaction.amount"
-                step="0.01" 
-                required>
-            </div>
-            
-            <div class="form-group">
-              <label for="refundNotes">Notes (Optional)</label>
-              <textarea 
-                id="refundNotes" 
-                [(ngModel)]="refundNotes" 
-                name="refundNotes"
-                rows="3"></textarea>
-            </div>
-            
-            <div class="form-actions">
-              <button type="button" class="btn secondary" (click)="cancelRefund()">Cancel</button>
-              <button type="submit" class="btn warning">Process Refund</button>
-            </div>
-          </form>
+        <div class="modal-actions">
+          <button class="btn secondary" (click)="closeModal()">Close</button>
         </div>
       </div>
     </div>

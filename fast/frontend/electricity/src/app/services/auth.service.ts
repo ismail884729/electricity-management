@@ -22,6 +22,11 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -35,31 +40,34 @@ export class AuthService {
     private router: Router
   ) {
     // Check if user is stored in localStorage on initialization
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        this.currentUserSubject.next(user);
-      } catch (e) {
-        localStorage.removeItem('currentUser');
-      }
+    const storedToken = localStorage.getItem('jwt_token');
+    if (storedToken) {
+      // Attempt to fetch current user to validate token and populate user data
+      this.fetchCurrentUser().subscribe({
+        next: (user) => this.setCurrentUser(user),
+        error: (error) => {
+          console.error('Error fetching current user on app load:', error);
+          console.error('Error details:', error.error);
+          console.error('Error message:', error.message);
+          this.logout(); // Logout if token is invalid or user cannot be fetched
+        }
+      });
     }
   }
 
-  login(credentials: LoginRequest): Observable<User> {
-    return this.http.post<User>(`${this.apiUrl}/login`, credentials)
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(
-        tap((user) => {
-          // Store user details and token in local storage
-          localStorage.setItem('currentUser', JSON.stringify(user));
-          this.currentUserSubject.next(user);
+        tap((response) => {
+          localStorage.setItem('jwt_token', response.access_token);
+          // User details will be fetched via /users/me after successful login
         })
       );
   }
 
   logout(): void {
-    // Remove user from local storage and set current user to null
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('currentUser'); // Also remove currentUser if it was stored
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
   }
@@ -68,12 +76,23 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  setCurrentUser(user: User): void {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    this.currentUserSubject.next(user);
+  }
+
   changePassword(changePasswordData: { username: string, current_password: string, new_password: string }): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/change-password`, changePasswordData);
   }
 
+  fetchCurrentUser(): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/users/me`).pipe(
+      tap(user => this.setCurrentUser(user))
+    );
+  }
+
   isLoggedIn(): boolean {
-    return !!this.getCurrentUser();
+    return !!this.getToken();
   }
 
   isAdmin(): boolean {
@@ -82,17 +101,6 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    // Get the token from the user object if it exists
-    // Note: If your FastAPI backend sends a separate token in the response,
-    // update this method to retrieve it properly
-    const user = this.getCurrentUser();
-    
-    // If the backend sends a token in the response, it should be stored separately
-    // For now we'll use a simple approach for testing
-    return user ? 'dummy-token' : null;
-    
-    // Uncomment this if your FastAPI backend includes an actual token in the response:
-    // const token = localStorage.getItem('auth_token');
-    // return token;
+    return localStorage.getItem('jwt_token');
   }
 }

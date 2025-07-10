@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -6,23 +6,40 @@ import { User } from './auth.service';
 
 export interface Transaction {
   id: number;
-  user_id: number;
   amount: number;
-  payment_method: string;
-  status: string;
-  transaction_date: string;
   units_purchased: number;
+  transaction_reference: string;
+  status: string;
+  balance_before: number;
+  balance_after: number;
+  payment_method: string;
+  device_id: string;
+  notes: string;
+  created_at: string;
+  completed_at: string;
+  rate_id: number;
+  rate_name: string;
+  price_per_unit: number;
+  user_id: number;
+  username: string;
+  user_email: string;
+  user_full_name: string;
+  user_phone_number: string;
+  device_name: string;
 }
 
 export interface Device {
   id: number;
+  device_id: string;
   user_id: number;
   device_name: string;
-  device_type: string;
-  serial_number: string;
-  status: string;
-  installation_date: string;
-  last_reading: number;
+  is_online: boolean;
+  last_seen: string | null;
+  unit_balance: number;
+  signal_strength: number;
+  is_primary: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface UsageData {
@@ -53,8 +70,11 @@ export class UserService {
   constructor(private http: HttpClient) { }
 
   // Get current user profile
-  getUserProfile(): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/users/me`);
+  getMe(): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/users/me`, { 
+      responseType: 'json',
+      headers: { 'Accept': 'application/json' }
+    });
   }
 
   // Update user profile
@@ -63,34 +83,45 @@ export class UserService {
   }
 
   // Get user transactions
-  getUserTransactions(): Observable<Transaction[]> {
-    return this.http.get<Transaction[]>(`${this.apiUrl}/users/transactions`);
+  getUserTransactions(userId: number, skip: number = 0, limit: number = 100, status?: string): Observable<Transaction[]> {
+    let params = new HttpParams()
+      .set('skip', skip.toString())
+      .set('limit', limit.toString());
+    if (status) {
+      params = params.set('status', status);
+    }
+    return this.http.get<Transaction[]>(`${this.apiUrl}/users/${userId}/transactions`, { params });
   }
 
-  // Get user devices
-  getUserDevices(): Observable<Device[]> {
-    return this.http.get<Device[]>(`${this.apiUrl}/users/devices`);
+  // Get user devices (now accepts both user ID and device ID)
+  getUserDevices(identifier: number | string): Observable<Device[]> {
+    return this.http.get<Device[]>(`${this.apiUrl}/users/devices/${identifier}`);
   }
 
-  // Get device details
-  getDeviceDetails(deviceId: number): Observable<Device> {
-    return this.http.get<Device>(`${this.apiUrl}/users/devices/${deviceId}`);
+  // Get primary user device
+  getPrimaryUserDevice(userId: number): Observable<Device> {
+    return this.http.get<Device>(`${this.apiUrl}/users/devices/${userId}/primary`);
   }
 
-  // Get usage statistics
-  getUsageStatistics(deviceId?: number): Observable<UsageData[]> {
-    const url = deviceId 
-      ? `${this.apiUrl}/users/usage?device_id=${deviceId}`
-      : `${this.apiUrl}/users/usage`;
-    return this.http.get<UsageData[]>(url);
+  // Get device details (can be covered by getUserDevices now)
+  // getDeviceDetails(deviceId: string): Observable<Device> {
+  //   return this.http.get<Device>(`${this.apiUrl}/users/devices/${deviceId}`);
+  // }
+
+  // Get usage statistics for a specific user
+  getUserUsage(userId: number): Observable<UsageData[]> {
+    return this.http.get<UsageData[]>(`${this.apiUrl}/users/${userId}/usage`);
   }
 
   // Buy electricity units
-  buyElectricity(amount: number, paymentMethod: string): Observable<Transaction> {
-    return this.http.post<Transaction>(`${this.apiUrl}/users/buy`, {
-      amount,
-      payment_method: paymentMethod
-    });
+  buyUnits(userId: number, units: number, paymentMethod: string, deviceId: string, notes?: string): Observable<Transaction> {
+    const body = {
+      units,
+      payment_method: paymentMethod,
+      device_id: deviceId,
+      notes
+    };
+    return this.http.post<Transaction>(`${this.apiUrl}/users/buy-units/${userId}`, body);
   }
 
   // Submit support request

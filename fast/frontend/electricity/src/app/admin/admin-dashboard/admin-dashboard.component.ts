@@ -1,25 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-
-interface Activity {
-  time: string;
-  user: string;
-  action: string;
-  details: string;
-}
-
-interface SystemStatus {
-  name: string;
-  description: string;
-  status: 'operational' | 'warning' | 'critical';
-  icon: string;
-}
-
-interface RevenueSegment {
-  label: string;
-  percentage: number;
-  color: string;
-  rotation: number;
-}
+import { AdminService, DashboardStats } from '../../services/admin.service';
+import { Transaction } from '../../services/user.service'; // Import Transaction interface
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -27,83 +9,34 @@ interface RevenueSegment {
   styleUrls: ['./admin-dashboard.component.css']
 })
 export class AdminDashboardComponent implements OnInit {
-  // Chart data
+  stats: DashboardStats | null = null;
+  recentTransactions: Transaction[] = []; // Re-introduce recentTransactions
+
+  // Chart data (keeping dummy data for now as no API for this was provided)
   consumptionData = [65, 59, 80, 81, 56, 55, 72];
   timeLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  
-  revenueDistribution: RevenueSegment[] = [
-    { label: 'Residential', percentage: 45, color: '#4e73df', rotation: 0 },
-    { label: 'Commercial', percentage: 30, color: '#1cc88a', rotation: 162 },
-    { label: 'Industrial', percentage: 15, color: '#36b9cc', rotation: 270 },
-    { label: 'Other', percentage: 10, color: '#f6c23e', rotation: 324 }
-  ];
 
-  // Recent activities
-  recentActivities: Activity[] = [
-    {
-      time: '2 minutes ago',
-      user: 'John Doe',
-      action: 'Payment',
-      details: 'Made a payment of $125.50'
-    },
-    {
-      time: '15 minutes ago',
-      user: 'Jane Smith',
-      action: 'Account Update',
-      details: 'Updated contact information'
-    },
-    {
-      time: '1 hour ago',
-      user: 'Robert Johnson',
-      action: 'New Registration',
-      details: 'Created a new account'
-    },
-    {
-      time: '3 hours ago',
-      user: 'Emily Davis',
-      action: 'Meter Reading',
-      details: 'Submitted a meter reading of 1,234 kWh'
-    },
-    {
-      time: '5 hours ago',
-      user: 'Admin User',
-      action: 'System Update',
-      details: 'Updated rate plans'
-    }
-  ];
-
-  // System statuses
-  systemStatuses: SystemStatus[] = [
-    {
-      name: 'Payment Gateway',
-      description: 'All payment systems operating normally',
-      status: 'operational',
-      icon: 'fa-credit-card'
-    },
-    {
-      name: 'Metering System',
-      description: 'Data collection operating at normal levels',
-      status: 'operational',
-      icon: 'fa-tachometer-alt'
-    },
-    {
-      name: 'Customer Portal',
-      description: 'Experiencing higher than normal traffic',
-      status: 'warning',
-      icon: 'fa-users'
-    },
-    {
-      name: 'Reporting System',
-      description: 'Scheduled maintenance in progress',
-      status: 'warning',
-      icon: 'fa-chart-bar'
-    }
-  ];
-
-  constructor() { }
+  constructor(private adminService: AdminService) { }
 
   ngOnInit(): void {
-    // In a real application, this would fetch data from a service
+    this.loadDashboardStats();
+  }
+
+  loadDashboardStats(): void {
+    this.showLoadingAlert('Loading Dashboard Stats...');
+    this.adminService.getDashboardStats().subscribe({
+      next: (response: DashboardStats) => { // Type as DashboardStats directly
+        console.log('API Response:', response); // Log the full response
+        Swal.close();
+        this.stats = response; // Assign the response directly
+        this.recentTransactions = response.recent_transactions; // Assign recent transactions
+        this.showSuccessAlert('Dashboard stats loaded successfully!');
+      },
+      error: (err) => {
+        Swal.close();
+        this.showErrorAlert('Failed to load dashboard stats.', err.message);
+      }
+    });
   }
 
   updateDateRange(event: Event): void {
@@ -111,5 +44,33 @@ export class AdminDashboardComponent implements OnInit {
     const selectedValue = target.value;
     // In a real application, this would update the dashboard data based on the selected range
     console.log('Selected date range:', selectedValue);
+  }
+
+  private showLoadingAlert(message: string): void {
+    Swal.fire({
+      title: message,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+  }
+
+  private showSuccessAlert(message: string): void {
+    Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: message,
+      timer: 2000,
+      showConfirmButton: false
+    });
+  }
+
+  private showErrorAlert(title: string, message: string): void {
+    Swal.fire({
+      icon: 'error',
+      title: title,
+      text: message
+    });
   }
 }

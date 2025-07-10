@@ -2,7 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { AuthService, LoginResponse, User } from '../services/auth.service';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-login',
@@ -18,7 +19,8 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private userService: UserService // Inject UserService
   ) {
     this.loginForm = this.fb.group({
       username: ['', [Validators.required]],
@@ -51,25 +53,37 @@ export class LoginComponent implements OnInit {
     
     // For testing with the specific user "juma"
     console.log(`Attempting login with ${username}`);
-    
     this.authService.login({ username, password })
       .subscribe({
-        next: (user) => {
-          this.isLoading = false;
-          console.log('Login successful:', user);
-          // Redirect based on user role
-          if (user.role === 'admin') {
-            this.router.navigate(['/admin/dashboard']);
-          } else {
-            this.router.navigate(['/user/dashboard']);
-          }
+        next: (response: LoginResponse) => { // Use LoginResponse type
+          console.log('Login successful, token received:', response.access_token);
+          // Now fetch user details using the new /users/me endpoint
+          this.userService.getMe().subscribe({
+            next: (user: User) => { // Use User type
+              this.isLoading = false;
+              this.authService.setCurrentUser(user); // Store the full user object
+              console.log('User profile fetched:', user);
+              // Redirect based on user role
+              if (user.role === 'admin') {
+                this.router.navigate(['/admin/dashboard']);
+              } else {
+                this.router.navigate(['/user/dashboard']);
+              }
+            },
+            error: (userError: HttpErrorResponse) => {
+              this.isLoading = false;
+              this.errorMessage = 'Failed to fetch user profile after login.';
+              console.error('Error fetching user profile:', userError);
+              console.error('User profile error details:', userError.error); // Log the actual error body
+              console.error('User profile error message:', userError.message); // Log the error message
+              this.authService.logout(); // Log out if profile fetch fails
+            }
+          });
         },
         error: (error: HttpErrorResponse) => {
           this.isLoading = false;
           if (error.status === 401) {
             this.errorMessage = 'Invalid username or password';
-          } else if (error.status === 422) {
-            this.errorMessage = 'Validation error. Please check your input.';
           } else {
             this.errorMessage = 'Login failed. Please try again later.';
           }

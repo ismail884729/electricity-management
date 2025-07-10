@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AuthGuard } from './guards/auth.guard';
 
 import { GuestDashboardComponent } from './guest-dashboard/guest-dashboard.component';
 import { LoginComponent } from './login/login.component';
@@ -8,8 +9,8 @@ import { LoginComponent } from './login/login.component';
 const routes: Routes = [
   { path: '', component: GuestDashboardComponent },
   { path: 'login', component: LoginComponent },
-  { path: 'admin', loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule) },
-  { path: 'user', loadChildren: () => import('./user/user.module').then(m => m.UserModule) },
+  { path: 'admin', loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule), canActivate: [AuthGuard] },
+  { path: 'user', loadChildren: () => import('./user/user.module').then(m => m.UserModule), canActivate: [AuthGuard] },
   { path: 'dashboard', redirectTo: 'user/dashboard', pathMatch: 'full' }, // Redirect to user dashboard by default
   
   { path: '**', redirectTo: '' } // Redirect any unknown routes to the dashboard

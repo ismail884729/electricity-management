@@ -27,12 +27,16 @@
 
 .search-section {
   margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .search-bar {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex: 1;
 }
 
 .search-bar input {
@@ -48,7 +52,7 @@
   border-color: #007bff;
 }
 
-.search-btn {
+.search-btn, .add-user-btn {
   padding: 12px 24px;
   background-color: #007bff;
   color: white;
@@ -58,8 +62,65 @@
   font-size: 14px;
 }
 
-.search-btn:hover {
+.search-btn:hover, .add-user-btn:hover {
   background-color: #0056b3;
+}
+
+.user-form-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.user-form-container h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="number"],
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.save-btn, .cancel-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.cancel-btn {
+  background-color: #dc3545;
+  color: white;
 }
 
 .users-table-container {
@@ -97,6 +158,7 @@
   font-size: 12px;
   font-weight: 500;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
 .status-badge.active {
@@ -135,6 +197,15 @@
 
 .action-btn.edit:hover {
   background-color: #e0a800;
+}
+
+.action-btn.delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.action-btn.delete:hover {
+  background-color: #c82333;
 }
 
 .pagination {

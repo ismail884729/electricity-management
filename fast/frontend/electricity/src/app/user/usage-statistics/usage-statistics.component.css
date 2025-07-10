@@ -258,6 +258,13 @@
   margin-bottom: 20px;
 }
 
+/* Adjust grid for more cards */
+@media (min-width: 1025px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr); /* Keep 2 columns for larger screens */
+  }
+}
+
 .summary-card {
   background-color: #f9f9f9;
   border-radius: 8px;
@@ -319,7 +326,7 @@
   }
   
   .summary-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr); /* Changed to 2 columns for better readability on tablets */
   }
 }
 
@@ -331,6 +338,6 @@
   }
   
   .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr; /* Single column on small mobile devices */
   }
 }

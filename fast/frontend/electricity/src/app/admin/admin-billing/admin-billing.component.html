@@ -7,16 +7,16 @@
   <!-- Summary Cards -->
   <div class="summary-cards">
     <div class="summary-card">
-      <h3>Total Bills</h3>
-      <p class="amount">${{ totalAmount.toFixed(2) }}</p>
+      <h3>Total Revenue</h3>
+      <p class="amount">TSh {{ totalAmount | currency:'TSh':'symbol':'1.2-2' }}</p>
     </div>
     <div class="summary-card">
-      <h3>Paid Amount</h3>
-      <p class="amount paid">${{ paidAmount.toFixed(2) }}</p>
+      <h3>Total Transactions</h3>
+      <p class="amount">{{ totalTransactions }}</p>
     </div>
     <div class="summary-card">
-      <h3>Pending Amount</h3>
-      <p class="amount pending">${{ pendingAmount.toFixed(2) }}</p>
+      <h3>Avg. Transaction Value</h3>
+      <p class="amount">TSh {{ averageTransactionValue | currency:'TSh':'symbol':'1.2-2' }}</p>
     </div>
   </div>
 
@@ -25,14 +25,14 @@
     <div class="search-bar">
       <input 
         type="text" 
-        placeholder="Search bills by bill number, user name, or ID..." 
-        #searchInput
+        placeholder="Search transactions by reference or user name..." 
+        [(ngModel)]="searchTerm"
         (keyup.enter)="searchBills()">
-      <select #statusSelect (change)="filterByStatus()">
-        <option value="">All Status</option>
-        <option value="Paid">Paid</option>
-        <option value="Pending">Pending</option>
-        <option value="Overdue">Overdue</option>
+      <select [(ngModel)]="selectedStatus" (change)="filterByStatus()">
+        <option value="all">All Status</option>
+        <option value="completed">Completed</option>
+        <option value="pending">Pending</option>
+        <option value="failed">Failed</option>
       </select>
       <button class="search-btn" (click)="searchBills()">Search</button>
     </div>
@@ -43,38 +43,38 @@
     <table class="bills-table">
       <thead>
         <tr>
-          <th>Bill Number</th>
+          <th>Transaction Ref</th>
           <th>User Name</th>
           <th>Amount</th>
-          <th>Units Consumed</th>
-          <th>Period</th>
-          <th>Issue Date</th>
-          <th>Due Date</th>
+          <th>Units Purchased</th>
+          <th>Date</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let bill of bills">
-          <td>{{ bill.billNumber }}</td>
-          <td>{{ bill.userName }}</td>
-          <td>${{ bill.amount.toFixed(2) }}</td>
-          <td>{{ bill.unitsConsumed }} kWh</td>
-          <td>{{ bill.period }}</td>
-          <td>{{ bill.issueDate }}</td>
-          <td>{{ bill.dueDate }}</td>
+        <tr *ngFor="let bill of filteredBills | slice: (currentPage - 1) * 10 : currentPage * 10">
+          <td>{{ bill.transaction_reference }}</td>
+          <td>{{ bill.username || bill.user_full_name }}</td>
+          <td>TSh {{ bill.amount | currency:'TSh':'symbol':'1.2-2' }}</td>
+          <td>{{ bill.units_purchased }} kWh</td>
+          <td>{{ bill.created_at | date:'short' }}</td>
           <td>
             <span class="status-badge" 
-                  [class.paid]="bill.status === 'Paid'" 
-                  [class.pending]="bill.status === 'Pending'"
-                  [class.overdue]="bill.status === 'Overdue'">
+                  [ngClass]="bill.status">
               {{ bill.status }}
             </span>
           </td>
           <td>
             <button class="action-btn view" (click)="viewBillDetails(bill)">View</button>
-            <button class="action-btn edit" (click)="editBill(bill)">Edit</button>
-            <button class="action-btn reminder" *ngIf="bill.status !== 'Paid'" (click)="sendReminder(bill)">Remind</button>
+            <!-- Edit and Remind actions might need specific API endpoints or logic -->
+            <!-- <button class="action-btn edit" (click)="editBill(bill)">Edit</button> -->
+            <!-- <button class="action-btn reminder" *ngIf="bill.status !== 'completed'" (click)="sendReminder(bill)">Remind</button> -->
+          </td>
+        </tr>
+        <tr *ngIf="filteredBills.length === 0">
+          <td colspan="7" class="no-data">
+            No billing transactions found.
           </td>
         </tr>
       </tbody>

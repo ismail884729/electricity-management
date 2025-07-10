@@ -1,15 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-
-interface RatePlan {
-  id: string;
-  name: string;
-  type: string;
-  baseRate: number;
-  peakRate: number;
-  offPeakRate: number;
-  status: string;
-  description?: string;
-}
+import { AdminService, RatePlan } from '../../services/admin.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-admin-rate-plans',
@@ -17,89 +8,25 @@ interface RatePlan {
   styleUrls: ['./admin-rate-plans.component.css']
 })
 export class AdminRatePlansComponent implements OnInit {
-  // Rate plans data
   ratePlans: RatePlan[] = [];
   filteredRatePlans: RatePlan[] = [];
-  
-  // Search
   searchTerm: string = '';
-  
-  // Form state
+
   showPlanForm: boolean = false;
   isEditMode: boolean = false;
-  currentPlan: RatePlan = {
-    id: '',
-    name: '',
-    type: 'Fixed',
-    baseRate: 0.00,
-    peakRate: 0.00,
-    offPeakRate: 0.00,
-    status: 'Active',
-    description: ''
-  };
+  currentPlan: Partial<RatePlan> = {};
 
-  constructor() { }
+  constructor(private adminService: AdminService) { }
 
   ngOnInit(): void {
     this.loadRatePlans();
   }
 
   loadRatePlans(): void {
-    // In a real application, this would come from a service
-    this.ratePlans = [
-      {
-        id: 'RP-001',
-        name: 'Standard Residential Plan',
-        type: 'Fixed',
-        baseRate: 0.12,
-        peakRate: 0.18,
-        offPeakRate: 0.08,
-        status: 'Active',
-        description: 'Basic residential electricity plan with fixed rates.'
-      },
-      {
-        id: 'RP-002',
-        name: 'Time-of-Use Residential',
-        type: 'Time-of-Use',
-        baseRate: 0.10,
-        peakRate: 0.22,
-        offPeakRate: 0.06,
-        status: 'Active',
-        description: 'Residential plan with different rates based on time of day.'
-      },
-      {
-        id: 'RP-003',
-        name: 'Business Standard',
-        type: 'Commercial',
-        baseRate: 0.09,
-        peakRate: 0.15,
-        offPeakRate: 0.07,
-        status: 'Active',
-        description: 'Standard rate plan for small to medium businesses.'
-      },
-      {
-        id: 'RP-004',
-        name: 'Seasonal Flex',
-        type: 'Seasonal',
-        baseRate: 0.11,
-        peakRate: 0.20,
-        offPeakRate: 0.09,
-        status: 'Inactive',
-        description: 'Seasonal rates that adjust based on demand patterns throughout the year.'
-      },
-      {
-        id: 'RP-005',
-        name: 'Industrial Power',
-        type: 'Industrial',
-        baseRate: 0.08,
-        peakRate: 0.14,
-        offPeakRate: 0.05,
-        status: 'Active',
-        description: 'High-volume plan for industrial customers with specialized needs.'
-      }
-    ];
-    
-    this.filteredRatePlans = [...this.ratePlans];
+    this.adminService.getAllRatePlans().subscribe(plans => {
+      this.ratePlans = plans;
+      this.filteredRatePlans = plans;
+    });
   }
 
   filterPlans(): void {
@@ -107,66 +34,132 @@ export class AdminRatePlansComponent implements OnInit {
       this.filteredRatePlans = [...this.ratePlans];
       return;
     }
-    
+
     const searchLower = this.searchTerm.toLowerCase();
-    this.filteredRatePlans = this.ratePlans.filter(plan => 
-      plan.name.toLowerCase().includes(searchLower) || 
-      plan.type.toLowerCase().includes(searchLower) ||
-      plan.id.toLowerCase().includes(searchLower)
+    this.filteredRatePlans = this.ratePlans.filter(plan =>
+      plan.rate_name.toLowerCase().includes(searchLower)
     );
   }
 
   showAddPlanForm(): void {
     this.isEditMode = false;
     this.currentPlan = {
-      id: `RP-${this.generateRandomId()}`,
-      name: '',
-      type: 'Fixed',
-      baseRate: 0.00,
-      peakRate: 0.00,
-      offPeakRate: 0.00,
-      status: 'Active',
-      description: ''
+      rate_name: '',
+      price_per_unit: 0,
+      is_active: true,
+      effective_date: new Date().toISOString().split('T')[0]
     };
     this.showPlanForm = true;
   }
 
   editPlan(plan: RatePlan): void {
     this.isEditMode = true;
-    // Create a copy to avoid direct reference modification
     this.currentPlan = { ...plan };
     this.showPlanForm = true;
   }
 
   savePlan(): void {
-    if (this.isEditMode) {
-      // Update existing plan
-      const index = this.ratePlans.findIndex(p => p.id === this.currentPlan.id);
-      if (index !== -1) {
-        this.ratePlans[index] = { ...this.currentPlan };
-      }
+    this.showLoadingAlert('Saving Rate Plan...');
+    if (this.isEditMode && this.currentPlan.id) {
+      this.adminService.updateRatePlan(this.currentPlan.id, this.currentPlan).subscribe({
+        next: () => {
+          Swal.close();
+          this.showSuccessAlert('Rate Plan updated successfully!');
+          this.loadRatePlans();
+          this.cancelForm();
+        },
+        error: (err) => {
+          Swal.close();
+          this.showErrorAlert('Failed to update rate plan.', err.message);
+        }
+      });
     } else {
-      // Add new plan
-      this.ratePlans.push({ ...this.currentPlan });
+      this.adminService.addRateJsonPublic(this.currentPlan).subscribe({
+        next: () => {
+          Swal.close();
+          this.showSuccessAlert('Rate Plan created successfully!');
+          this.loadRatePlans();
+          this.cancelForm();
+        },
+        error: (err) => {
+          Swal.close();
+          this.showErrorAlert('Failed to create rate plan.', err.message);
+        }
+      });
     }
-    
-    // Reset and update filtered list
-    this.filterPlans();
-    this.cancelForm();
   }
 
-  deletePlan(planId: string): void {
-    if (confirm('Are you sure you want to delete this rate plan?')) {
-      this.ratePlans = this.ratePlans.filter(plan => plan.id !== planId);
-      this.filterPlans();
-    }
+  deletePlan(planId: number): void {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'You will not be able to recover this rate plan!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'No, keep it'
+    }).then((result) => {
+      if (result.value) {
+        this.showLoadingAlert('Deleting Rate Plan...');
+        this.adminService.deleteRatePlan(planId).subscribe({
+          next: () => {
+            Swal.close();
+            this.showSuccessAlert('Rate Plan deleted successfully!');
+            this.loadRatePlans();
+          },
+          error: (err) => {
+            Swal.close();
+            this.showErrorAlert('Failed to delete rate plan.', err.message);
+          }
+        });
+      }
+    });
+  }
+
+  togglePlanStatus(plan: RatePlan): void {
+    this.showLoadingAlert('Updating Rate Plan Status...');
+    this.adminService.activateRatePlan(plan.id).subscribe({
+      next: () => {
+        Swal.close();
+        this.showSuccessAlert('Rate Plan status updated successfully!');
+        this.loadRatePlans();
+      },
+      error: (err) => {
+        Swal.close();
+        this.showErrorAlert('Failed to update rate plan status.', err.message);
+      }
+    });
   }
 
   cancelForm(): void {
     this.showPlanForm = false;
+    this.currentPlan = {};
   }
 
-  private generateRandomId(): string {
-    return Math.floor(1000 + Math.random() * 9000).toString();
+  private showLoadingAlert(message: string): void {
+    Swal.fire({
+      title: message,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+  }
+
+  private showSuccessAlert(message: string): void {
+    Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: message,
+      timer: 2000,
+      showConfirmButton: false
+    });
+  }
+
+  private showErrorAlert(title: string, message: string): void {
+    Swal.fire({
+      icon: 'error',
+      title: title,
+      text: message
+    });
   }
 }

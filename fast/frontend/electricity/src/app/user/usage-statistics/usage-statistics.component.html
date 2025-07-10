@@ -128,7 +128,25 @@
         <div class="summary-card">
           <div class="card-label">Highest Usage</div>
           <div class="card-value">{{ highestUsage }} kWh</div>
-          <div class="card-period">{{ formatDate(highestUsageDay) }}</div>
+          <div class="card-period">{{ highestUsageDay }}</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-label">Avg. Price per Unit</div>
+          <div class="card-value">${{ averagePricePerUnit.toFixed(3) }}</div>
+          <div class="card-period">Based on Transactions</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-label">Current Rate</div>
+          <div class="card-value">{{ currentRate?.rate_name || 'N/A' }}</div>
+          <div class="card-period">${{ currentRate?.price_per_unit?.toFixed(3) || 'N/A' }} / kWh</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-label">Predicted Next Month</div>
+          <div class="card-value">{{ predictedNextMonthConsumption }} kWh</div>
+          <div class="card-period">${{ predictedNextMonthCost.toFixed(2) }}</div>
         </div>
       </div>
       

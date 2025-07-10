@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import Swal from 'sweetalert2';
+import { AdminService } from '../../services/admin.service';
 
 
 @Component({
@@ -13,7 +15,7 @@ export class AdminReportsComponent implements OnInit {
   endDate: string = '';
   reportGenerated: boolean = false;
 
-  constructor() {}
+  constructor(private adminService: AdminService) {}
 
   ngOnInit(): void {
     // Set default date range to last month
@@ -26,25 +28,36 @@ export class AdminReportsComponent implements OnInit {
   }
 
   generateReport(): void {
+    this.showLoadingAlert('Generating Report...');
     // In a real app, this would fetch report data from a service
-    console.log('Generating report:', {
-      type: this.selectedReportType,
-      period: this.selectedTimePeriod,
-      startDate: this.startDate,
-      endDate: this.endDate
-    });
-    this.reportGenerated = true;
+    // For now, simulate API call and show success/error
+    setTimeout(() => {
+      Swal.close();
+      this.reportGenerated = true;
+      this.showSuccessAlert('Report generated successfully!');
+      console.log('Generating report:', {
+        type: this.selectedReportType,
+        period: this.selectedTimePeriod,
+        startDate: this.startDate,
+        endDate: this.endDate
+      });
+    }, 1500);
   }
 
   exportReport(): void {
     if (!this.reportGenerated) {
-      alert('Please generate a report first.');
+      this.showErrorAlert('Export Error', 'Please generate a report first.');
       return;
     }
     
-    // In a real app, this would export the report data to CSV/PDF
-    console.log('Exporting report...');
-    alert('Report export initiated. The file will be downloaded shortly.');
+    this.showLoadingAlert('Exporting Report...');
+    // In a real app, this would export the report data to CSV/PDF via a service call
+    // For now, simulate API call and show success/error
+    setTimeout(() => {
+      Swal.close();
+      this.showSuccessAlert('Report export initiated. The file will be downloaded shortly.');
+      console.log('Exporting report...');
+    }, 1500);
   }
 
   getReportTitle(): string {
@@ -241,5 +254,33 @@ export class AdminReportsComponent implements OnInit {
 
   private capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  private showLoadingAlert(message: string): void {
+    Swal.fire({
+      title: message,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+  }
+
+  private showSuccessAlert(message: string): void {
+    Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: message,
+      timer: 2000,
+      showConfirmButton: false
+    });
+  }
+
+  private showErrorAlert(title: string, message: string): void {
+    Swal.fire({
+      icon: 'error',
+      title: title,
+      text: message
+    });
   }
 }

@@ -26,16 +26,14 @@
              class="device-item" 
              [class.active]="selectedDevice && device.id === selectedDevice.id"
              (click)="selectDevice(device)">
-          <div class="device-icon" [ngClass]="{'meter': device.device_type === 'Smart Meter', 'gateway': device.device_type === 'Gateway'}">
-            <span *ngIf="device.device_type === 'Smart Meter' || device.device_type.toLowerCase().includes('meter')">⚡</span>
-            <span *ngIf="device.device_type === 'Gateway' || device.device_type.toLowerCase().includes('gateway')">📶</span>
-            <span *ngIf="!device.device_type.toLowerCase().includes('meter') && !device.device_type.toLowerCase().includes('gateway')">🔌</span>
+          <div class="device-icon">
+            <span>⚡</span>
           </div>
           <div class="device-basic-info">
             <div class="device-name">{{ device.device_name }}</div>
-            <div class="device-id">ID: {{ device.serial_number }}</div>
-            <div class="device-status" [ngClass]="{'active': device.status === 'active', 'inactive': device.status !== 'active'}">
-              {{ device.status }}
+            <div class="device-id">ID: {{ device.device_id }}</div>
+            <div class="device-status" [ngClass]="{'active': device.is_online, 'inactive': !device.is_online}">
+              {{ device.is_online ? 'Online' : 'Offline' }}
             </div>
           </div>
         </div>
@@ -45,7 +43,7 @@
     <!-- Device Detail View -->
     <div class="device-detail-view" *ngIf="selectedDevice">
       <div class="device-header">
-        <h3>{{ selectedDevice.device_name }} ({{ selectedDevice.serial_number }})</h3>
+        <h3>{{ selectedDevice.device_name }} ({{ selectedDevice.device_id }})</h3>
         <div class="device-actions">
           <button class="device-action primary">Test Connection</button>
           <button class="device-action secondary">Reset Device</button>
@@ -57,20 +55,20 @@
           <h4>General Information</h4>
           <div class="info-grid">
             <div class="info-item">
-              <div class="info-label">Device Type</div>
-              <div class="info-value">{{ selectedDevice.device_type }}</div>
+              <div class="info-label">Device Name</div>
+              <div class="info-value">{{ selectedDevice.device_name }}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Device ID</div>
-              <div class="info-value">{{ selectedDevice.id }}</div>
+              <div class="info-value">{{ selectedDevice.device_id }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Serial Number</div>
-              <div class="info-value">{{ selectedDevice.serial_number }}</div>
+              <div class="info-label">Is Primary</div>
+              <div class="info-value">{{ selectedDevice.is_primary ? 'Yes' : 'No' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Installation Date</div>
-              <div class="info-value">{{ formatDate(selectedDevice.installation_date) }}</div>
+              <div class="info-label">Created At</div>
+              <div class="info-value">{{ formatDate(selectedDevice.created_at) }}</div>
             </div>
           </div>
         </div>
@@ -80,17 +78,21 @@
           <div class="info-grid">
             <div class="info-item">
               <div class="info-label">Status</div>
-              <div class="info-value status" [ngClass]="{'active': selectedDevice.status === 'active', 'inactive': selectedDevice.status !== 'active'}">
-                {{ selectedDevice.status }}
+              <div class="info-value status" [ngClass]="{'active': selectedDevice.is_online, 'inactive': !selectedDevice.is_online}">
+                {{ selectedDevice.is_online ? 'Online' : 'Offline' }}
               </div>
             </div>
             <div class="info-item">
-              <div class="info-label">User ID</div>
-              <div class="info-value">{{ selectedDevice.user_id }}</div>
+              <div class="info-label">Last Seen</div>
+              <div class="info-value">{{ selectedDevice.last_seen ? formatDate(selectedDevice.last_seen) : 'N/A' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Last Reading</div>
-              <div class="info-value">{{ selectedDevice.last_reading }} kWh</div>
+              <div class="info-label">Unit Balance</div>
+              <div class="info-value">{{ selectedDevice.unit_balance }} kWh</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Signal Strength</div>
+              <div class="info-value">{{ selectedDevice.signal_strength }}%</div>
             </div>
           </div>
         </div>

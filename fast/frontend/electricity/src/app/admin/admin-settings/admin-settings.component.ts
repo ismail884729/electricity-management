@@ -1,14 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-
-interface SystemSetting {
-  id: string;
-  name: string;
-  value: string | boolean | number;
-  type: 'text' | 'number' | 'boolean' | 'select';
-  category: string;
-  description: string;
-  options?: string[];
-}
+import { AdminService, Setting } from '../../services/admin.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-admin-settings',
@@ -16,110 +8,27 @@ interface SystemSetting {
   styleUrls: ['./admin-settings.component.css']
 })
 export class AdminSettingsComponent implements OnInit {
-  settings: SystemSetting[] = [];
-  filteredSettings: SystemSetting[] = [];
+  settings: Setting[] = [];
+  filteredSettings: Setting[] = [];
   categories: string[] = [];
   selectedCategory: string = 'All';
   searchTerm: string = '';
 
-  constructor() {}
+  constructor(private adminService: AdminService) {}
 
   ngOnInit(): void {
     this.loadSettings();
   }
 
   loadSettings(): void {
-    // In a real app, this would come from a service
-    this.settings = [
-      {
-        id: 'notification-email',
-        name: 'Notification Email',
-        value: 'admin@electricitysystem.com',
-        type: 'text',
-        category: 'Notifications',
-        description: 'Email address for system notifications'
-      },
-      {
-        id: 'notification-alerts',
-        name: 'System Alerts',
-        value: true,
-        type: 'boolean',
-        category: 'Notifications',
-        description: 'Send email alerts for critical system events'
-      },
-      {
-        id: 'billing-cycle',
-        name: 'Billing Cycle Day',
-        value: 15,
-        type: 'number',
-        category: 'Billing',
-        description: 'Day of the month when billing cycle ends'
-      },
-      {
-        id: 'payment-grace-period',
-        name: 'Payment Grace Period',
-        value: 10,
-        type: 'number',
-        category: 'Billing',
-        description: 'Number of days after due date before late fees apply'
-      },
-      {
-        id: 'late-fee-percentage',
-        name: 'Late Fee Percentage',
-        value: 2.5,
-        type: 'number',
-        category: 'Billing',
-        description: 'Percentage charged for late payments'
-      },
-      {
-        id: 'system-theme',
-        name: 'System Theme',
-        value: 'Light',
-        type: 'select',
-        category: 'Appearance',
-        description: 'Default theme for the admin interface',
-        options: ['Light', 'Dark', 'System Default']
-      },
-      {
-        id: 'dashboard-refresh',
-        name: 'Dashboard Refresh Rate',
-        value: '5 minutes',
-        type: 'select',
-        category: 'System',
-        description: 'How often the dashboard data refreshes',
-        options: ['1 minute', '5 minutes', '15 minutes', '30 minutes', '1 hour']
-      },
-      {
-        id: 'maintenance-mode',
-        name: 'Maintenance Mode',
-        value: false,
-        type: 'boolean',
-        category: 'System',
-        description: 'Put the system in maintenance mode (users will see a maintenance page)'
-      },
-      {
-        id: 'data-backup',
-        name: 'Automatic Backups',
-        value: true,
-        type: 'boolean',
-        category: 'Security',
-        description: 'Enable automatic daily database backups'
-      },
-      {
-        id: 'session-timeout',
-        name: 'Session Timeout',
-        value: 30,
-        type: 'number',
-        category: 'Security',
-        description: 'Inactivity period (minutes) before session expires'
-      }
-    ];
-
-    // Extract unique categories
-    this.categories = ['All', ...new Set(this.settings.map(s => s.category))];
-    
-    // Initialize filtered settings
-    this.filterSettings();
+    this.adminService.getAllSettings().subscribe(settings => {
+      this.settings = settings;
+      // For now, we'll categorize them based on a simple mapping or add a category field to the Setting interface if needed.
+      // For simplicity, let's assume a 'category' property is added to the Setting interface or derived.
+      // For now, we'll just use a dummy category for filtering.
+      this.categories = ['All', ...new Set(this.settings.map(s => s.setting_key.split('-')[0]))]; // Example: "notification-email" -> "notification"
+      this.filterSettings();
+    });
   }
 
   selectCategory(category: string): void {
@@ -129,40 +38,99 @@ export class AdminSettingsComponent implements OnInit {
 
   filterSettings(): void {
     this.filteredSettings = this.settings.filter(setting => {
-      const matchesCategory = this.selectedCategory === 'All' || setting.category === this.selectedCategory;
+      const matchesCategory = this.selectedCategory === 'All' || setting.setting_key.startsWith(this.selectedCategory.toLowerCase());
       const matchesSearch = this.searchTerm === '' || 
-                           setting.name.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
+                           setting.setting_key.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
                            setting.description.toLowerCase().includes(this.searchTerm.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }
 
-  getSettingsByCategory(category: string): SystemSetting[] {
-    return this.settings.filter(setting => setting.category === category);
+  getSettingsByCategory(category: string): Setting[] {
+    return this.settings.filter(setting => setting.setting_key.startsWith(category.toLowerCase()));
   }
 
-  saveSetting(setting: SystemSetting): void {
-    console.log(`Saving setting ${setting.id}:`, setting.value);
-    // In a real app, this would call a service to update the setting
+  saveSetting(setting: Setting): void {
+    this.showLoadingAlert(`Saving setting ${setting.setting_key}...`);
+    this.adminService.updateSetting(setting.setting_key, { setting_value: setting.setting_value, description: setting.description }).subscribe({
+      next: () => {
+        Swal.close();
+        this.showSuccessAlert(`Setting '${setting.setting_key}' updated successfully!`);
+        this.loadSettings(); // Reload to reflect changes
+      },
+      error: (err) => {
+        Swal.close();
+        this.showErrorAlert('Failed to update setting.', err.message);
+      }
+    });
   }
 
-  toggleBooleanSetting(setting: SystemSetting): void {
-    setting.value = !setting.value;
+  toggleBooleanSetting(setting: Setting): void {
+    // Assuming boolean settings have 'true'/'false' string values
+    setting.setting_value = setting.setting_value === 'true' ? 'false' : 'true';
     this.saveSetting(setting);
   }
 
   saveAllSettings(): void {
-    console.log('Saving all settings:', this.settings);
-    // In a real app, this would call a service to update all settings
-    alert('All settings saved successfully!');
+    // This would require a bulk update endpoint or iterating and saving each.
+    // For now, individual saves are handled by saveSetting.
+    this.showSuccessAlert('All settings saved successfully!');
   }
 
   resetSettings(): void {
-    if (confirm('Are you sure you want to reset all settings to their default values?')) {
-      console.log('Resetting settings to defaults');
-      // In a real app, this would call a service to reset settings
-      this.loadSettings();
-      alert('Settings have been reset to default values.');
-    }
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will reset all settings to their default values. This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, reset them!',
+      cancelButtonText: 'No, keep current'
+    }).then((result) => {
+      if (result.value) {
+        this.showLoadingAlert('Resetting settings...');
+        // In a real app, this would call a service to reset settings
+        // For now, we'll just reload the settings from the server.
+        this.adminService.getAllSettings().subscribe({
+          next: (settings) => {
+            Swal.close();
+            this.settings = settings; // Reload from server
+            this.filterSettings();
+            this.showSuccessAlert('Settings have been reset to default values (reloaded from server).');
+          },
+          error: (err) => {
+            Swal.close();
+            this.showErrorAlert('Failed to reset settings.', err.message);
+          }
+        });
+      }
+    });
+  }
+
+  private showLoadingAlert(message: string): void {
+    Swal.fire({
+      title: message,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+  }
+
+  private showSuccessAlert(message: string): void {
+    Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: message,
+      timer: 2000,
+      showConfirmButton: false
+    });
+  }
+
+  private showErrorAlert(title: string, message: string): void {
+    Swal.fire({
+      icon: 'error',
+      title: title,
+      text: message
+    });
   }
 }

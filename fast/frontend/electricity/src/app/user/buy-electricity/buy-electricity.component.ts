@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../services/auth.service';
-import { RateInfo, UserService } from '../../services/user.service';
+import { RateInfo, UserService, Device } from '../../services/user.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-buy-electricity',
@@ -12,7 +13,7 @@ export class BuyElectricityComponent implements OnInit {
   amount: number = 0;
   units: number = 0;
   selectedMeter: string = '';
-  paymentMethod: string = '';
+  paymentMethod: string = 'direct';
   isProcessing: boolean = false;
   transactionComplete: boolean = false;
   showChatbot: boolean = false;
@@ -24,17 +25,13 @@ export class BuyElectricityComponent implements OnInit {
   calculatedCost: string = '';
   isCalculating: boolean = false;
   costPerUnit: number = 0;
+  transactionFeePercentage: number = 0.04; // Assuming a 4% transaction fee based on user feedback (1000 -> 960)
+  netAmount: number = 0; // The amount after deducting fees
 
-  meters = [
-    { id: 'MET-12345', location: 'Main Entrance' },
-    { id: 'SM-003', location: 'Garage' }
-  ];
+  meters: Device[] = [];
 
   paymentMethods = [
-    { id: 'credit', name: 'Credit Card' },
-    { id: 'debit', name: 'Debit Card' },
-    { id: 'paypal', name: 'PayPal' },
-    { id: 'bank', name: 'Bank Transfer' }
+    { id: 'direct', name: 'Direct Method' }
   ];
 
   constructor(
@@ -69,19 +66,25 @@ export class BuyElectricityComponent implements OnInit {
   }
   
   loadUserDevices(): void {
-    this.userService.getUserDevices().subscribe({
-      next: (devices) => {
-        if (devices && devices.length > 0) {
-          this.meters = devices.map(device => ({
-            id: device.serial_number,
-            location: device.device_name
-          }));
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.userService.getUserDevices(currentUser.id).subscribe({
+        next: (devices) => {
+          if (devices && devices.length > 0) {
+            this.meters = devices;
+            const primaryDevice = devices.find(d => d.is_primary);
+            if (primaryDevice) {
+              this.selectedMeter = primaryDevice.device_id;
+            } else {
+              this.selectedMeter = devices[0].device_id;
+            }
+          }
+        },
+        error: (error) => {
+          console.error('Error loading devices:', error);
         }
-      },
-      error: (error) => {
-        console.error('Error loading devices:', error);
-      }
-    });
+      });
+    }
   }
   
   calculateUnits(): void {
@@ -91,58 +94,20 @@ export class BuyElectricityComponent implements OnInit {
       return;
     }
     
-    // Basic calculation based on local rate
-    this.units = Math.floor(this.amount / this.costPerUnit);
+    // Calculate units based on the exact monetary amount
+    this.units = this.amount / this.costPerUnit;
     
-    // Get more accurate calculation from API
-    this.getCalculatedCost();
-  }
-  
-  getCalculatedCost(): void {
-    if (this.units <= 0) return;
-    
-    this.isCalculating = true;
-    const currentUser = this.authService.getCurrentUser();
-    
-    if (currentUser) {
-      // If we have a user ID and device ID, use the user-specific endpoint
-      this.userService.calculatePurchaseForUser(
-        currentUser.id, 
-        this.units,
-        this.selectedMeter
-      ).subscribe({
-        next: (result) => {
-          this.calculatedCost = result;
-          this.isCalculating = false;
-        },
-        error: (error) => {
-          console.error('Error calculating purchase for user:', error);
-          this.isCalculating = false;
-          // Fall back to basic calculation
-          this.calculatedCost = `TSh ${(this.units * this.costPerUnit).toLocaleString()}`;
-        }
-      });
-    } else {
-      // Otherwise use the general endpoint
-      this.userService.calculatePurchase(this.units).subscribe({
-        next: (result) => {
-          this.calculatedCost = result;
-          this.isCalculating = false;
-        },
-        error: (error) => {
-          console.error('Error calculating purchase:', error);
-          this.isCalculating = false;
-          // Fall back to basic calculation
-          this.calculatedCost = `TSh ${(this.units * this.costPerUnit).toLocaleString()}`;
-        }
-      });
-    }
+    // Calculate the net amount after deducting the transaction fee
+    this.netAmount = this.amount * (1 - this.transactionFeePercentage);
+
+    // The calculated cost is the net amount that will be credited
+    this.calculatedCost = `TSh ${this.netAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   processPayment(): void {
     // Validate form
-    if (!this.selectedMeter || !this.paymentMethod || this.amount <= 0) {
-      this.errorMessage = 'Please fill all required fields';
+    if (!this.selectedMeter || !this.paymentMethod || this.amount <= 0 || this.units <= 0) {
+      this.errorMessage = 'Please fill all required fields and enter a valid amount.';
       return;
     }
 
@@ -150,8 +115,10 @@ export class BuyElectricityComponent implements OnInit {
     Swal.fire({
       title: 'Confirm Purchase',
       html: `
-        <p>You are about to purchase <strong>${this.units} kWh</strong> of electricity.</p>
-        <p>Cost: <strong>${this.calculatedCost || 'TSh ' + (this.units * this.costPerUnit).toLocaleString()}</strong></p>
+        <p>You are about to purchase <strong>${this.units.toFixed(2)} kWh</strong> of electricity.</p>
+        <p>Amount entered: <strong>TSh ${this.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></p>
+        <p>Transaction Fee (${(this.transactionFeePercentage * 100).toFixed(0)}%): <strong>TSh ${(this.amount * this.transactionFeePercentage).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></p>
+        <p>Net Amount (credited to meter): <strong>TSh ${this.netAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></p>
         <p>Meter: <strong>${this.selectedMeter}</strong></p>
         <p>Payment method: <strong>${this.getPaymentMethodName()}</strong></p>
       `,
@@ -176,41 +143,55 @@ export class BuyElectricityComponent implements OnInit {
   executePayment(): void {
     this.errorMessage = '';
     this.isProcessing = true;
+    const currentUser = this.authService.getCurrentUser();
 
-    this.userService.buyElectricity(this.amount, this.paymentMethod).subscribe({
-      next: (transaction) => {
-        this.isProcessing = false;
-        this.transactionComplete = true;
-        this.transactionId = `TXN-${transaction.id}`;
-        
-        // Show success message
-        Swal.fire({
-          title: 'Purchase Successful!',
-          text: `You have successfully purchased ${this.units} kWh of electricity.`,
-          icon: 'success',
-          confirmButtonColor: '#00897b'
-        });
-      },
-      error: (error) => {
-        this.isProcessing = false;
-        console.error('Payment failed:', error);
-        
-        // Show error message
-        Swal.fire({
-          title: 'Purchase Failed',
-          text: error.error?.detail || error.error?.message || 'There was an error processing your payment. Please try again.',
-          icon: 'error',
-          confirmButtonColor: '#d33'
-        });
-      }
-    });
+    if (currentUser) {
+      this.userService.buyUnits(currentUser.id, this.units, this.paymentMethod, this.selectedMeter).subscribe({
+        next: (transaction) => {
+          this.isProcessing = false;
+          this.transactionComplete = true;
+          this.transactionId = transaction.transaction_reference;
+          
+          // Refresh user balance after successful purchase
+          this.authService.fetchCurrentUser().subscribe({
+            next: (user) => {
+              console.log('User balance refreshed:', user.unit_balance);
+            },
+            error: (err) => {
+              console.error('Error refreshing user balance after purchase:', err);
+            }
+          });
+
+          // Show success message with the actual amount charged
+          Swal.fire({
+            title: 'Purchase Successful!',
+            html: `You have successfully purchased <strong>${this.units.toFixed(2)} kWh</strong> of electricity.<br>
+                   Amount charged: <strong>TSh ${transaction.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>`,
+            icon: 'success',
+            confirmButtonColor: '#00897b'
+          });
+        },
+        error: (error: HttpErrorResponse) => {
+          this.isProcessing = false;
+          console.error('Payment failed:', error);
+          
+          // Show error message
+          Swal.fire({
+            title: 'Purchase Failed',
+            text: error.error?.detail || error.error?.message || 'There was an error processing your payment. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#d33'
+          });
+        }
+      });
+    }
   }
 
   resetForm(): void {
     this.amount = 0;
     this.units = 0;
     this.selectedMeter = '';
-    this.paymentMethod = '';
+    this.paymentMethod = 'direct';
     this.transactionComplete = false;
     this.errorMessage = '';
   }

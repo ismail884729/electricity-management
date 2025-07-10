@@ -45,10 +45,21 @@ export class DeviceDetailsComponent implements OnInit {
   
   loadUserWithDevices(userId: number): void {
     this.isLoading = true;
+    Swal.fire({
+      title: 'Loading Device Information',
+      text: 'Please wait...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
     
     this.userService.getUserWithDevices(userId)
       .pipe(
-        finalize(() => this.isLoading = false)
+        finalize(() => {
+          this.isLoading = false;
+          Swal.close();
+        })
       )
       .subscribe({
         next: (data) => {
@@ -60,6 +71,14 @@ export class DeviceDetailsComponent implements OnInit {
             const device = this.devices.find(d => d.id === this.deviceId);
             if (device) {
               this.selectedDevice = device;
+              Swal.fire({
+                icon: 'success',
+                title: 'Device Information Loaded',
+                text: 'Device details have been successfully loaded.',
+                timer: 1500,
+                showConfirmButton: false,
+                confirmButtonColor: '#00897b' // Changed to match buy-electricity
+              });
             } else {
               this.showError('Device not found');
             }
@@ -67,6 +86,21 @@ export class DeviceDetailsComponent implements OnInit {
           // Otherwise select the first device if available
           else if (this.devices.length > 0) {
             this.selectedDevice = this.devices[0];
+            Swal.fire({
+              icon: 'success',
+              title: 'Device Information Loaded',
+              text: 'Device details have been successfully loaded.',
+              timer: 1500,
+              showConfirmButton: false,
+              confirmButtonColor: '#00897b' // Changed to match buy-electricity
+            });
+          } else {
+            Swal.fire({
+              icon: 'info',
+              title: 'No Devices Found',
+              text: 'No devices are associated with this user.',
+              confirmButtonColor: '#00897b' // Changed to match buy-electricity
+            });
           }
         },
         error: (error) => {
@@ -95,7 +129,7 @@ export class DeviceDetailsComponent implements OnInit {
       title: 'Error',
       text: message,
       icon: 'error',
-      confirmButtonColor: '#d33'
+      confirmButtonColor: '#d33' // Keep red for errors
     });
   }
 }
